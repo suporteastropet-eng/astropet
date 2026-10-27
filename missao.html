@@ -504,4 +504,761 @@
         padding: 18px 14px;
       }
       .modal-content { padding: 28px 18px 24px; }
-      .planet { width: 72
+      .planet { width: 72px; height: 72px; font-size: 2rem; min-width: 72px; min-height: 72px; }
+      .planets-grid { gap: 10px; }
+      .puzzle-grid { width: 260px; height: 260px; }
+      .floating-pet { width: 70px; opacity: 0.4; }
+      .match-item { min-width: 66px; padding: 12px 14px; font-size: 0.9rem; }
+      .color-block-item { min-width: 66px; height: 48px; }
+    }
+
+    /* ============================================ */
+    /* ACESSIBILIDADE: REDUÇÃO DE MOVIMENTO         */
+    /* ============================================ */
+    @media (prefers-reduced-motion: reduce) {
+      .floating-pet { animation: none !important; }
+      .planet.highlight { transform: none; }
+      .mission-square { transition: none; }
+      * { scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stars"></canvas>
+
+  <img src="luna.png" alt="" class="floating-pet" id="pet-luna-float">
+  <img src="Bolt.png" alt="" class="floating-pet" id="pet-bolt-float">
+  <img src="mimi.png" alt="" class="floating-pet" id="pet-mimi-float">
+  <img src="tiko.png" alt="" class="floating-pet" id="pet-tiko-float">
+  <img src="pet-extra.png" alt="" class="floating-pet" id="pet-placeholder-float">
+
+  <header class="page-header">
+    <h1 class="page-title">Escolha sua Missão</h1>
+    <div class="page-subtitle">AstroPets</div>
+  </header>
+
+  <div class="mission-grid">
+
+    <div class="mission-square" id="mission-luna" tabindex="0" role="button" onclick="openGame('luna')" onkeydown="if(event.key==='Enter'||event.key===' ')openGame('luna')">
+      <div class="mission-emoji">🧠</div>
+      <div class="pet-name">Luna</div>
+      <div class="mission-name">Memória Cósmica</div>
+      <div class="mission-description">Repita a sequência de luzes para treinar foco e memória.</div>
+    </div>
+
+    <div class="mission-square" id="mission-bolt" tabindex="0" role="button" onclick="openGame('bolt')" onkeydown="if(event.key==='Enter'||event.key===' ')openGame('bolt')">
+      <div class="mission-emoji">🌈</div>
+      <div class="pet-name">Bolt</div>
+      <div class="mission-name">Assimilar as Cores</div>
+      <div class="mission-description">Combine o nome da cor com o bloco colorido correspondente.</div>
+    </div>
+
+    <div class="mission-square" id="mission-mimi" tabindex="0" role="button" onclick="openGame('mimi')" onkeydown="if(event.key==='Enter'||event.key===' ')openGame('mimi')">
+      <div class="mission-emoji">🔢</div>
+      <div class="pet-name">Mimi</div>
+      <div class="mission-name">Match Numérico Astral</div>
+      <div class="mission-description">Combine o extenso com o numeral correto em cada rodada.</div>
+    </div>
+
+    <div class="mission-square" id="mission-tiko" tabindex="0" role="button" onclick="openGame('tiko')" onkeydown="if(event.key==='Enter'||event.key===' ')openGame('tiko')">
+      <div class="mission-emoji">🧩</div>
+      <div class="pet-name">Tiko</div>
+      <div class="mission-name">Quebra-cabeça Astral</div>
+      <div class="mission-description">Deslize as peças e recrie a imagem secreta da tartaruga.</div>
+    </div>
+
+  </div>
+
+  <!-- LUNA -->
+  <div id="lunaGameModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="luna-title">
+    <div class="modal-content">
+      <button class="close-button" onclick="closeGame('luna')" aria-label="Fechar missão da Luna">&times;</button>
+      <h2 id="luna-title">Missão: Memória Cósmica da Luna</h2>
+      <p>Observe a sequência de luzes e clique nas luas na ordem correta.</p>
+
+      <div class="planets-grid" id="planets-grid">
+        <button class="planet" id="p1" aria-label="Lua">🌙</button>
+        <button class="planet" id="p2" aria-label="Coração">💕</button>
+        <button class="planet" id="p3" aria-label="Olhos de coração">😍</button>
+        <button class="planet" id="p4" aria-label="Carinha piscando">😜</button>
+      </div>
+
+      <div id="feedback-memoria" class="game-feedback" aria-live="polite" aria-atomic="true">Clique em "Começar" para ver a sequência.</div>
+      
+      <div id="luna-controls">
+        <button class="game-action-button" id="btn-luna-start" onclick="iniciarMemoria()">Começar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOLT -->
+  <div id="boltGameModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="bolt-title">
+    <div class="modal-content">
+      <button class="close-button" onclick="closeGame('bolt')" aria-label="Fechar missão do Bolt">&times;</button>
+      <h2 id="bolt-title">Missão: Assimilar as Cores do Bolt</h2>
+
+      <div class="game-feedback" id="bolt-feedback" aria-live="polite" aria-atomic="true">Clique no nome da cor e depois no bloco colorido correspondente.</div>
+
+      <div class="match-container">
+        <div class="match-grid" id="bolt-match-grid">
+          <div class="row" id="color-name-row"></div>
+          <div class="row" id="color-block-row"></div>
+        </div>
+      </div>
+
+      <div id="bolt-game-controls">
+        <button class="game-action-button" onclick="startBoltGame()">Iniciar Jogo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIMI -->
+  <div id="mimiGameModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="mimi-title">
+    <div class="modal-content">
+      <button class="close-button" onclick="closeGame('mimi')" aria-label="Fechar missão da Mimi">&times;</button>
+      <h2 id="mimi-title">Missão: Match Numérico Astral</h2>
+
+      <div class="game-feedback" id="mimi-feedback" aria-live="polite" aria-atomic="true">Clique no número por extenso e depois no numeral correto.</div>
+
+      <div class="match-container">
+        <div class="match-grid" id="match-grid">
+          <div class="row" id="extenso-row"></div>
+          <div class="row" id="numeral-row"></div>
+        </div>
+      </div>
+
+      <div id="mimi-game-info">
+        Nível: <span id="mimi-level">1 (1-10)</span>
+      </div>
+
+      <div id="mimi-game-controls">
+        <button class="game-action-button" onclick="startMimiGame()">Iniciar Nível</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIKO -->
+  <div id="tikoGameModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="tiko-title">
+    <div class="modal-content">
+      <button class="close-button" onclick="closeGame('tiko')" aria-label="Fechar missão do Tiko">&times;</button>
+      <h2 id="tiko-title">Missão: Quebra-cabeça Astral do Tiko</h2>
+
+      <div class="game-feedback" id="tiko-feedback" aria-live="polite" aria-atomic="true">Reorganize as peças para formar a imagem completa.</div>
+
+      <div class="puzzle-wrapper">
+        <div class="puzzle-grid" id="tiko-puzzle-grid"></div>
+      </div>
+
+      <div id="tiko-game-controls">
+        <button class="game-action-button" onclick="startTikoGame()">Iniciar Quebra-cabeça</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ============================================ */
+    /* UTILITÁRIOS                                  */
+    /* ============================================ */
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function openGame(petId) {
+      const map = {
+        luna: ['lunaGameModal', resetLunaGame],
+        bolt: ['boltGameModal', resetBoltGame],
+        mimi: ['mimiGameModal', resetMimiGame],
+        tiko: ['tikoGameModal', resetTikoGame]
+      };
+      const [modalId, reset] = map[petId];
+      document.getElementById(modalId).classList.add('active');
+      reset();
+    }
+
+    function closeGame(petId) {
+      const map = {
+        luna: ['lunaGameModal', resetLunaGame],
+        bolt: ['boltGameModal', resetBoltGame],
+        mimi: ['mimiGameModal', resetMimiGame],
+        tiko: ['tikoGameModal', resetTikoGame]
+      };
+      const [modalId, reset] = map[petId];
+      document.getElementById(modalId).classList.remove('active');
+      reset();
+    }
+
+    /* ============================================ */
+    /* LUNA (JOGO DA MEMÓRIA CORRIGIDO)             */
+    /* ============================================ */
+    const planetElements = document.querySelectorAll('#planets-grid .planet');
+    const feedbackMemoria = document.getElementById('feedback-memoria');
+    const btnLunaStart = document.getElementById('btn-luna-start');
+    
+    let sequence = [];
+    let playerSequence = [];
+    let isPlayerTurn = false;
+    let isShowingSequence = false;
+    let gameActive = false;
+
+    const PLANET_EMOJI = { p1: '🌙', p2: '💕', p3: '😍', p4: '😜' };
+
+    function resetLunaGame() {
+      sequence = [];
+      playerSequence = [];
+      isPlayerTurn = false;
+      isShowingSequence = false;
+      gameActive = false;
+      feedbackMemoria.textContent = 'Clique em "Começar" para ver a sequência.';
+      feedbackMemoria.className = 'game-feedback';
+      btnLunaStart.textContent = 'Começar';
+      btnLunaStart.disabled = false;
+      planetElements.forEach(p => p.classList.remove('error', 'highlight', 'turn-active'));
+    }
+
+    async function tocarSequencia() {
+      isShowingSequence = true;
+      isPlayerTurn = false;
+      feedbackMemoria.textContent = `👀 Observe com atenção... (${sequence.length} ${sequence.length === 1 ? 'passo' : 'passos'})`;
+      feedbackMemoria.className = 'game-feedback observing';
+
+      await delay(600);
+
+      for (let i = 0; i < sequence.length; i++) {
+        const planet = document.getElementById(sequence[i]);
+        planet.classList.add('highlight');
+        await delay(700);
+        planet.classList.remove('highlight');
+        await delay(400);
+      }
+
+      isShowingSequence = false;
+      isPlayerTurn = true;
+      feedbackMemoria.textContent = '👉 Sua vez! Repita a sequência na mesma ordem.';
+      feedbackMemoria.className = 'game-feedback your-turn';
+      planetElements.forEach(p => p.classList.add('turn-active'));
+    }
+
+    async function iniciarMemoria() {
+      if (isShowingSequence || isPlayerTurn) return;
+      
+      if (!gameActive) {
+        gameActive = true;
+        sequence = [];
+        btnLunaStart.textContent = 'Próximo Nível';
+        btnLunaStart.disabled = true;
+      }
+
+      playerSequence = [];
+      feedbackMemoria.textContent = 'Preparando...';
+      feedbackMemoria.className = 'game-feedback';
+      await delay(500);
+
+      const idx = Math.floor(Math.random() * 4);
+      sequence.push(planetElements[idx].id);
+      
+      await tocarSequencia();
+    }
+
+    planetElements.forEach(planet => {
+      planet.addEventListener('click', async (e) => {
+        if (!isPlayerTurn) return;
+        const clickedId = e.currentTarget.id;
+        playerSequence.push(clickedId);
+
+        e.currentTarget.classList.add('highlight');
+        setTimeout(() => e.currentTarget.classList.remove('highlight'), 250);
+
+        const currentStep = playerSequence.length - 1;
+
+        if (clickedId !== sequence[currentStep]) {
+          isPlayerTurn = false;
+          planetElements.forEach(p => p.classList.remove('turn-active'));
+          e.currentTarget.classList.add('error');
+          
+          const sequenciaCorreta = sequence.map(id => PLANET_EMOJI[id]).join(' → ');
+          feedbackMemoria.textContent = `❌ Quase! A sequência correta era: ${sequenciaCorreta}. Clique em "Tentar Novamente" para recomeçar.`;
+          feedbackMemoria.className = 'game-feedback error';
+          
+          setTimeout(() => e.currentTarget.classList.remove('error'), 1000);
+          
+          sequence = [];
+          playerSequence = [];
+          gameActive = false;
+          btnLunaStart.textContent = 'Tentar Novamente';
+          btnLunaStart.disabled = false;
+          return;
+        }
+
+        if (playerSequence.length === sequence.length) {
+          isPlayerTurn = false;
+          planetElements.forEach(p => p.classList.remove('turn-active'));
+          feedbackMemoria.textContent = `✅ Muito bem! Você completou ${sequence.length} ${sequence.length === 1 ? 'passo' : 'passos'}!`;
+          feedbackMemoria.className = 'game-feedback success';
+          playerSequence = [];
+          
+          btnLunaStart.disabled = false;
+          btnLunaStart.textContent = 'Próximo Nível';
+        }
+      });
+    });
+
+    /* ============================================ */
+    /* BOLT                                         */
+    /* ============================================ */
+    const colorNameRow = document.getElementById('color-name-row');
+    const colorBlockRow = document.getElementById('color-block-row');
+    const boltFeedback = document.getElementById('bolt-feedback');
+    let boltMatchesCompleted = 0;
+    let boltSelectedElement = null;
+    let boltTypeSelected = null;
+
+    const COLORS_MAP = [
+      { name: "LARANJA",  hex: "#FF6A00" },
+      { name: "AZUL",     hex: "#0055FF" },
+      { name: "VERMELHO", hex: "#E60012" },
+      { name: "AMARELO",  hex: "#FFD700" },
+      { name: "VERDE",    hex: "#00A32E" },
+      { name: "ROSA",     hex: "#FF1493" },
+      { name: "MARROM",   hex: "#7A3E17" },
+      { name: "ROXO",     hex: "#7A00CC" }
+    ];
+
+    function generateBoltGame() {
+      boltMatchesCompleted = 0;
+      colorNameRow.innerHTML = '';
+      colorBlockRow.innerHTML = '';
+      boltSelectedElement = null;
+      boltTypeSelected = null;
+      boltFeedback.textContent = 'Clique no nome da cor e depois no bloco colorido correspondente.';
+      boltFeedback.className = 'game-feedback';
+
+      const shuffledNames = [...COLORS_MAP].sort(() => Math.random() - 0.5);
+      const shuffledBlocks = [...COLORS_MAP].sort(() => Math.random() - 0.5);
+
+      shuffledNames.forEach(color => {
+        const btn = document.createElement('button');
+        btn.classList.add('match-item', 'color-name-item');
+        btn.textContent = color.name;
+        btn.dataset.value = color.name;
+        btn.dataset.type = 'name';
+        btn.addEventListener('click', handleBoltClick);
+        colorNameRow.appendChild(btn);
+      });
+
+      shuffledBlocks.forEach(color => {
+        const btn = document.createElement('button');
+        btn.classList.add('match-item', 'color-block-item');
+        btn.style.backgroundColor = color.hex;
+        btn.dataset.value = color.name;
+        btn.dataset.type = 'block';
+        btn.setAttribute('aria-label', `Bloco da cor ${color.name.toLowerCase()}`);
+        btn.addEventListener('click', handleBoltClick);
+        colorBlockRow.appendChild(btn);
+      });
+    }
+
+    function startBoltGame() {
+      generateBoltGame();
+      document.querySelector('#bolt-game-controls button').textContent = 'Reiniciar Jogo';
+    }
+
+    function resetBoltGame() {
+      generateBoltGame();
+      boltFeedback.textContent = "Clique em 'Iniciar Jogo' para começar.";
+      boltFeedback.className = 'game-feedback';
+      document.querySelector('#bolt-game-controls button').textContent = 'Iniciar Jogo';
+    }
+
+    function checkBoltWin() {
+      if (boltMatchesCompleted === COLORS_MAP.length) {
+        boltFeedback.textContent = '🎉 Parabéns! Todas as cores foram assimiladas!';
+        boltFeedback.className = 'game-feedback success';
+      }
+    }
+
+    function handleBoltClick(event) {
+      const el = event.currentTarget;
+      if (el.classList.contains('matched')) return;
+      const value = el.dataset.value;
+      const type = el.dataset.type;
+
+      if (!boltSelectedElement) {
+        el.classList.add('selected');
+        boltSelectedElement = el;
+        boltTypeSelected = type;
+        boltFeedback.textContent = `Selecionado: ${value}. Agora clique no correspondente.`;
+        boltFeedback.className = 'game-feedback your-turn';
+        return;
+      }
+
+      if (boltSelectedElement === el) {
+        el.classList.remove('selected');
+        boltSelectedElement = null;
+        boltTypeSelected = null;
+        boltFeedback.textContent = 'Seleção cancelada.';
+        boltFeedback.className = 'game-feedback';
+        return;
+      }
+
+      if (type === boltTypeSelected) {
+        boltFeedback.textContent = '❌ Escolha um nome E um bloco de cor.';
+        boltFeedback.className = 'game-feedback error';
+        setTimeout(() => {
+          boltFeedback.className = 'game-feedback';
+          boltFeedback.textContent = 'Escolha um nome e depois uma cor.';
+        }, 1500);
+        return;
+      }
+
+      if (value === boltSelectedElement.dataset.value) {
+        boltFeedback.textContent = `✅ Acerto! ${value} combinado.`;
+        boltFeedback.className = 'game-feedback success';
+        el.classList.add('matched');
+        boltSelectedElement.classList.add('matched');
+        boltSelectedElement.classList.remove('selected');
+        boltSelectedElement = null;
+        boltTypeSelected = null;
+        boltMatchesCompleted++;
+        checkBoltWin();
+      } else {
+        boltFeedback.textContent = `❌ Erro! Não é a cor de ${boltSelectedElement.dataset.value}.`;
+        boltFeedback.className = 'game-feedback error';
+        boltSelectedElement.classList.remove('selected');
+        boltSelectedElement = null;
+        boltTypeSelected = null;
+        setTimeout(() => {
+          boltFeedback.className = 'game-feedback';
+          boltFeedback.textContent = `Tente novamente. ${COLORS_MAP.length - boltMatchesCompleted} pares restantes.`;
+        }, 2000);
+      }
+    }
+
+    /* ============================================ */
+    /* MIMI                                         */
+    /* ============================================ */
+    const extensoRow = document.getElementById('extenso-row');
+    const numeralRow = document.getElementById('numeral-row');
+    const mimiFeedback = document.getElementById('mimi-feedback');
+    const mimiLevelDisplay = document.getElementById('mimi-level');
+    let mimiCurrentLevel = 1;
+    let mimiMatchesCompleted = 0;
+    let mimiSelectedElement = null;
+    let mimiTypeSelected = null;
+
+    const NUMBERS_MAP = {
+      1: "UM", 2: "DOIS", 3: "TRÊS", 4: "QUATRO", 5: "CINCO",
+      6: "SEIS", 7: "SETE", 8: "OITO", 9: "NOVE", 10: "DEZ",
+      11: "ONZE", 12: "DOZE", 13: "TREZE", 14: "QUATORZE", 15: "QUINZE",
+      16: "DEZESSEIS", 17: "DEZESSETE", 18: "DEZOITO", 19: "DEZENOVE", 20: "VINTE"
+    };
+
+    function generateMimiGame() {
+      const start = mimiCurrentLevel === 1 ? 1 : 11;
+      const end = mimiCurrentLevel === 1 ? 10 : 20;
+      const rangeText = mimiCurrentLevel === 1 ? '(1-10)' : '(11-20)';
+
+      mimiLevelDisplay.textContent = `${mimiCurrentLevel} ${rangeText}`;
+      mimiMatchesCompleted = 0;
+      extensoRow.innerHTML = '';
+      numeralRow.innerHTML = '';
+      mimiSelectedElement = null;
+      mimiTypeSelected = null;
+      mimiFeedback.textContent = 'Clique no número por extenso e depois no numeral correto.';
+      mimiFeedback.className = 'game-feedback';
+
+      const nums = [];
+      for (let i = start; i <= end; i++) nums.push(i);
+
+      const shuffledN = [...nums].sort(() => Math.random() - 0.5);
+      const shuffledE = [...nums].sort(() => Math.random() - 0.5);
+
+      shuffledE.forEach(n => {
+        const btn = document.createElement('button');
+        btn.classList.add('match-item', 'extenso-item');
+        btn.textContent = NUMBERS_MAP[n];
+        btn.dataset.value = n;
+        btn.dataset.type = 'extenso';
+        btn.addEventListener('click', handleMimiClick);
+        extensoRow.appendChild(btn);
+      });
+      shuffledN.forEach(n => {
+        const btn = document.createElement('button');
+        btn.classList.add('match-item', 'numeral-item');
+        btn.textContent = n;
+        btn.dataset.value = n;
+        btn.dataset.type = 'numeral';
+        btn.addEventListener('click', handleMimiClick);
+        numeralRow.appendChild(btn);
+      });
+    }
+
+    function startMimiGame() {
+      generateMimiGame();
+      document.querySelector('#mimi-game-controls button').textContent = 'Reiniciar Nível';
+    }
+
+    function resetMimiGame() {
+      mimiCurrentLevel = 1;
+      generateMimiGame();
+      mimiFeedback.textContent = "Clique em 'Iniciar Nível' para começar.";
+      mimiFeedback.className = 'game-feedback';
+      document.querySelector('#mimi-game-controls button').textContent = 'Iniciar Nível';
+    }
+
+    function checkMimiWin() {
+      if (mimiMatchesCompleted === 10) {
+        if (mimiCurrentLevel === 1) {
+          mimiFeedback.textContent = '🎉 Nível 1 completo! Próximo nível (11-20)...';
+          mimiFeedback.className = 'game-feedback success';
+          mimiCurrentLevel = 2;
+          setTimeout(startMimiGame, 2500);
+        } else {
+          mimiFeedback.textContent = '🏆 Parabéns! Todos os níveis concluídos!';
+          mimiFeedback.className = 'game-feedback success';
+          document.querySelector('#mimi-game-controls button').textContent = 'Jogar Novamente';
+          mimiCurrentLevel = 1;
+        }
+      }
+    }
+
+    function handleMimiClick(event) {
+      const el = event.currentTarget;
+      if (el.classList.contains('matched')) return;
+      const value = parseInt(el.dataset.value);
+      const type = el.dataset.type;
+
+      if (!mimiSelectedElement) {
+        el.classList.add('selected');
+        mimiSelectedElement = el;
+        mimiTypeSelected = type;
+        mimiFeedback.textContent = `Selecionado: ${el.textContent}. Agora clique no correspondente.`;
+        mimiFeedback.className = 'game-feedback your-turn';
+        return;
+      }
+      if (mimiSelectedElement === el) {
+        el.classList.remove('selected');
+        mimiSelectedElement = null;
+        mimiTypeSelected = null;
+        mimiFeedback.textContent = 'Seleção cancelada.';
+        mimiFeedback.className = 'game-feedback';
+        return;
+      }
+      if (type === mimiTypeSelected) {
+        mimiFeedback.textContent = '❌ Escolha um extenso E um numeral.';
+        mimiFeedback.className = 'game-feedback error';
+        setTimeout(() => {
+          mimiFeedback.className = 'game-feedback';
+          mimiFeedback.textContent = 'Escolha um item de cada fileira.';
+        }, 1500);
+        return;
+      }
+
+      if (value === parseInt(mimiSelectedElement.dataset.value)) {
+        mimiFeedback.textContent = `✅ Acerto! Número ${value} combinado.`;
+        mimiFeedback.className = 'game-feedback success';
+        el.classList.add('matched');
+        mimiSelectedElement.classList.add('matched');
+        mimiSelectedElement.classList.remove('selected');
+        mimiSelectedElement = null;
+        mimiTypeSelected = null;
+        mimiMatchesCompleted++;
+        checkMimiWin();
+      } else {
+        mimiFeedback.textContent = `❌ Erro! ${mimiSelectedElement.textContent} não é ${el.textContent}.`;
+        mimiFeedback.className = 'game-feedback error';
+        mimiSelectedElement.classList.remove('selected');
+        mimiSelectedElement = null;
+        mimiTypeSelected = null;
+        setTimeout(() => {
+          mimiFeedback.className = 'game-feedback';
+          mimiFeedback.textContent = `Tente novamente. ${10 - mimiMatchesCompleted} pares restantes.`;
+        }, 2000);
+      }
+    }
+
+    /* ============================================ */
+    /* TIKO                                         */
+    /* ============================================ */
+    const TILE_COUNT = 9;
+    const GRID_SIZE = 3;
+    const TIKO_FEEDBACK = document.getElementById('tiko-feedback');
+    const TIKO_GRID = document.getElementById('tiko-puzzle-grid');
+    let puzzleState = [];
+    let isTikoGameRunning = false;
+
+    function getTilePosition(index) {
+      const row = Math.floor(index / GRID_SIZE);
+      const col = index % GRID_SIZE;
+      const x = (col / (GRID_SIZE - 1)) * 100;
+      const y = (row / (GRID_SIZE - 1)) * 100;
+      return `${x}% ${y}%`;
+    }
+
+    function createTikoTile(index, value) {
+      const tile = document.createElement('button');
+      tile.classList.add('puzzle-tile');
+      tile.dataset.value = value;
+      tile.dataset.index = index;
+      if (value === TILE_COUNT) {
+        tile.classList.add('empty');
+        tile.setAttribute('aria-label', 'Espaço vazio');
+      } else {
+        tile.style.backgroundPosition = getTilePosition(value - 1);
+        tile.setAttribute('aria-label', `Peça ${value}`);
+        tile.addEventListener('click', handleTikoClick);
+      }
+      return tile;
+    }
+
+    function renderTikoPuzzle() {
+      TIKO_GRID.innerHTML = '';
+      puzzleState.forEach((value, index) => {
+        TIKO_GRID.appendChild(createTikoTile(index, value));
+      });
+    }
+
+    function shufflePuzzle(array) {
+      let a = [...array];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      let inv = 0;
+      for (let i = 0; i < TILE_COUNT; i++)
+        for (let j = i + 1; j < TILE_COUNT; j++)
+          if (a[i] !== TILE_COUNT && a[j] !== TILE_COUNT && a[i] > a[j]) inv++;
+      if (inv % 2 !== 0) {
+        for (let i = 0; i < TILE_COUNT - 1; i++) {
+          if (a[i] !== TILE_COUNT && a[i + 1] !== TILE_COUNT) {
+            [a[i], a[i + 1]] = [a[i + 1], a[i]];
+            break;
+          }
+        }
+      }
+      return a;
+    }
+
+    function isSolved(state) {
+      for (let i = 0; i < TILE_COUNT; i++) if (state[i] !== i + 1) return false;
+      return true;
+    }
+
+    function startTikoGame() {
+      const solved = Array.from({ length: TILE_COUNT }, (_, i) => i + 1);
+      do { puzzleState = shufflePuzzle(solved); } while (isSolved(puzzleState));
+      renderTikoPuzzle();
+      isTikoGameRunning = true;
+      TIKO_FEEDBACK.textContent = 'Clique nas peças adjacentes ao espaço vazio para movê-las.';
+      TIKO_FEEDBACK.className = 'game-feedback your-turn';
+      document.querySelector('#tiko-game-controls button').textContent = 'Reiniciar Quebra-cabeça';
+    }
+
+    function resetTikoGame() {
+      TIKO_GRID.innerHTML = '';
+      puzzleState = [];
+      isTikoGameRunning = false;
+      TIKO_FEEDBACK.textContent = "Clique em 'Iniciar Quebra-cabeça' para embaralhar as peças.";
+      TIKO_FEEDBACK.className = 'game-feedback';
+      document.querySelector('#tiko-game-controls button').textContent = 'Iniciar Quebra-cabeça';
+    }
+
+    function getAdjacentIndexes(index) {
+      const row = Math.floor(index / GRID_SIZE);
+      const col = index % GRID_SIZE;
+      const adj = [];
+      if (row > 0) adj.push(index - GRID_SIZE);
+      if (row < GRID_SIZE - 1) adj.push(index + GRID_SIZE);
+      if (col > 0) adj.push(index - 1);
+      if (col < GRID_SIZE - 1) adj.push(index + 1);
+      return adj;
+    }
+
+    function checkTikoWin() {
+      for (let i = 0; i < TILE_COUNT; i++) if (puzzleState[i] !== i + 1) return false;
+      return true;
+    }
+
+    function handleTikoClick(event) {
+      if (!isTikoGameRunning) return;
+      const tile = event.currentTarget;
+      const idx = parseInt(tile.dataset.index);
+      const emptyIdx = puzzleState.indexOf(TILE_COUNT);
+      const adj = getAdjacentIndexes(emptyIdx);
+
+      if (adj.includes(idx)) {
+        [puzzleState[idx], puzzleState[emptyIdx]] = [puzzleState[emptyIdx], puzzleState[idx]];
+        renderTikoPuzzle();
+
+        if (checkTikoWin()) {
+          isTikoGameRunning = false;
+          TIKO_FEEDBACK.textContent = '🏆 Missão Completa! Tiko está feliz com a imagem restaurada!';
+          TIKO_FEEDBACK.className = 'game-feedback success';
+          const finalTile = TIKO_GRID.querySelector(`[data-value="${TILE_COUNT}"]`);
+          if (finalTile) {
+            finalTile.classList.remove('empty');
+            finalTile.style.backgroundImage = "url('tiko_puzzle_image.png')";
+            finalTile.style.backgroundSize = '300% 300%';
+            finalTile.style.backgroundPosition = getTilePosition(TILE_COUNT - 1);
+            TIKO_GRID.querySelectorAll('.puzzle-tile').forEach(t => t.removeEventListener('click', handleTikoClick));
+          }
+        } else {
+          TIKO_FEEDBACK.textContent = 'Movimento realizado. Continue!';
+          TIKO_FEEDBACK.className = 'game-feedback';
+        }
+      } else {
+        TIKO_FEEDBACK.textContent = '❌ Clique em uma peça adjacente ao espaço vazio.';
+        TIKO_FEEDBACK.className = 'game-feedback error';
+        setTimeout(() => { 
+          if (isTikoGameRunning) {
+            TIKO_FEEDBACK.textContent = 'Continue a missão!';
+            TIKO_FEEDBACK.className = 'game-feedback';
+          }
+        }, 1500);
+      }
+    }
+
+    /* ============================================ */
+    /* ESTRELAS DE FUNDO                            */
+    /* ============================================ */
+    const canvas = document.getElementById('stars');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      stars = Array.from({ length: 90 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.2 + 0.3,
+        o: Math.random()
+      }));
+    }
+    
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const reduzirMovimento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function drawStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const s of stars) {
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        const alpha = reduzirMovimento ? 0.85 : 0.7 + 0.3 * Math.sin(Date.now() / 1500 + s.o * 6.28);
+        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+        ctx.fill();
+      }
+      requestAnimationFrame(drawStars);
+    }
+    drawStars();
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
