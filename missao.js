@@ -38,23 +38,20 @@ function toggleVoz() {
   atualizarBotaoVoz();
   if (!vozAtiva) {
     try { speechSynthesis.cancel(); } catch (e) {}
+    vozFalando = false;
+    document.body.classList.remove('falando');
+    liberarBotoesAposFala();
   } else {
     desbloquearVoz();
     falar('Narração ligada');
   }
 }
 
-/**
- * DESBLOQUEIA a síntese de voz.
- * Navegadores bloqueiam speechSynthesis antes do primeiro toque.
- */
 function desbloquearVoz() {
   if (vozDesbloqueada) return;
   if (!('speechSynthesis' in window)) return;
-
   try {
     if (speechSynthesis.paused) speechSynthesis.resume();
-
     const u = new SpeechSynthesisUtterance('');
     u.volume = 0;
     u.rate = 1;
@@ -69,48 +66,104 @@ function desbloquearVoz() {
 });
 
 /**
- * Fala um texto em português do Brasil.
+ * Fala um texto em português do Brasil e RETORNA UMA PROMISE
+ * que resolve quando a fala terminar (ou se a voz estiver desligada).
  */
 function falar(texto, opcoes = {}) {
-  if (!vozAtiva) return;
-  if (!('speechSynthesis' in window)) return;
+  return new Promise((resolve) => {
+    if (!vozAtiva || !('speechSynthesis' in window)) {
+      resolve();
+      return;
+    }
 
-  try {
-    if (!vozDesbloqueada) desbloquearVoz();
-    speechSynthesis.cancel();
+    try {
+      if (!vozDesbloqueada) desbloquearVoz();
+      speechSynthesis.cancel();
 
-    const u = new SpeechSynthesisUtterance(texto);
-    u.lang = 'pt-BR';
-    u.rate = opcoes.rate || 0.95;
-    u.pitch = opcoes.pitch || 1.15;
-    u.volume = opcoes.volume || 1.0;
+      const u = new SpeechSynthesisUtterance(texto);
+      u.lang = 'pt-BR';
+      u.rate = opcoes.rate || 0.95;
+      u.pitch = opcoes.pitch || 1.15;
+      u.volume = opcoes.volume || 1.0;
 
-    const vozes = speechSynthesis.getVoices();
-    const vozPtBR = vozes.find(v => v.lang && v.lang.toLowerCase().startsWith('pt-br'))
-      || vozes.find(v => v.lang && v.lang.toLowerCase().startsWith('pt'));
-    if (vozPtBR) u.voice = vozPtBR;
+      const vozes = speechSynthesis.getVoices();
+      const vozPtBR = vozes.find(v => v.lang && v.lang.toLowerCase().startsWith('pt-br'))
+        || vozes.find(v => v.lang && v.lang.toLowerCase().startsWith('pt'));
+      if (vozPtBR) u.voice = vozPtBR;
 
-    vozFalando = true;
-    u.onstart = () => { vozFalando = true; };
-    u.onend = () => { vozFalando = false; };
-    u.onerror = () => { vozFalando = false; };
+      vozFalando = true;
+      document.body.classList.add('falando');
+      travarBotoesDuranteFala();
 
-    speechSynthesis.speak(u);
+      const finalizar = () => {
+        vozFalando = false;
+        document.body.classList.remove('falando');
+        liberarBotoesAposFala();
+        resolve();
+      };
 
-    setTimeout(() => {
-      if (!vozFalando && vozAtiva) {
-        try {
-          if (speechSynthesis.paused) speechSynthesis.resume();
-          speechSynthesis.speak(u);
-        } catch (e) {}
-      }
-    }, 400);
+      u.onend = finalizar;
+      u.onerror = finalizar;
 
-  } catch (e) {}
+      speechSynthesis.speak(u);
+
+      // Safety: se em 8s não terminou, libera tudo
+      setTimeout(() => {
+        if (vozFalando) {
+          try { speechSynthesis.cancel(); } catch (e) {}
+          finalizar();
+        }
+      }, 8000);
+
+    } catch (e) {
+      vozFalando = false;
+      document.body.classList.remove('falando');
+      liberarBotoesAposFala();
+      resolve();
+    }
+  });
 }
 
 if ('speechSynthesis' in window) {
   speechSynthesis.onvoiceschanged = () => {};
+}
+
+/* ============================================ */
+/* TRAVA DE BOTÕES ENQUANTO A VOZ FALA          */
+/* ============================================ */
+const botoesTravados = new Map();
+
+function travarBotoesDuranteFala() {
+  const seletores = [
+    '.game-action-button',
+    '.planet',
+    '.match-item',
+    '.puzzle-tile',
+    '#btn-victory-again',
+    '#btn-victory-other',
+    '.level-option',
+    '#btn-welcome-ok'
+  ];
+
+  seletores.forEach(sel => {
+    document.querySelectorAll(sel).forEach(btn => {
+      if (!botoesTravados.has(btn)) {
+        botoesTravados.set(btn, btn.disabled);
+      }
+      btn.disabled = true;
+      btn.classList.add('travado-fala');
+    });
+  });
+}
+
+function liberarBotoesAposFala() {
+  if (vozFalando) return;
+
+  botoesTravados.forEach((estadoAnterior, btn) => {
+    btn.disabled = estadoAnterior;
+    btn.classList.remove('travado-fala');
+  });
+  botoesTravados.clear();
 }
 
 /* ============================================ */
@@ -259,7 +312,6 @@ function verificarBoasVindas() {
         const btn = document.getElementById('btn-welcome-ok');
         if (btn) btn.focus();
       }, 100);
-      // Não fala aqui: a voz está bloqueada até o primeiro toque.
     }
   }
 }
@@ -271,9 +323,7 @@ function fecharBoasVindas() {
   try { localStorage.setItem(WELCOME_KEY, '1'); } catch (e) {}
 
   desbloquearVoz();
-  setTimeout(() => {
-    falar('Oi! Eu sou a Luna. Escolha uma missão para brincar.');
-  }, 200);
+  falar('Oi! Eu sou a Luna. Escolha uma missão para brincar.');
 }
 
 /* ============================================ */
@@ -300,7 +350,6 @@ function openGame(petId) {
     mimi: 'Missão da Mimi. Combine os números.',
     tiko: 'Missão do Tiko. Reorganize o quebra-cabeça.'
   };
-  setTimeout(() => falar(falas[petId] || 'Missão iniciada'), 150);
 
   const modal = document.getElementById(modalId);
   modal.classList.add('active');
@@ -312,6 +361,8 @@ function openGame(petId) {
   }, 50);
 
   reset();
+
+  falar(falas[petId] || 'Missão iniciada');
 }
 
 function closeGame(petId) {
@@ -483,9 +534,11 @@ async function piscarSequenciaInteira() {
   feedbackMemoria.textContent = `👀 Observe com atenção... (${lunaSequence.length} ${lunaSequence.length === 1 ? 'passo' : 'passos'})`;
   feedbackMemoria.className = 'game-feedback observing';
   renderProgressoLuna();
-  falar(`Observe com atenção. ${lunaSequence.length} ${lunaSequence.length === 1 ? 'passo' : 'passos'}`);
 
-  await delay(600);
+  // Espera a fala terminar antes de piscar
+  await falar(`Observe com atenção. ${lunaSequence.length} ${lunaSequence.length === 1 ? 'passo' : 'passos'}`);
+
+  await delay(300);
 
   for (let i = 0; i < lunaSequence.length; i++) {
     const planet = document.getElementById(lunaSequence[i]);
@@ -503,7 +556,9 @@ async function piscarSequenciaInteira() {
   feedbackMemoria.className = 'game-feedback your-turn';
   planetElements.forEach(p => p.classList.add('turn-active'));
   renderProgressoLuna();
-  falar('Sua vez! Repita a sequência.');
+
+  // Fala "Sua vez!" e trava até terminar
+  await falar('Sua vez! Repita a sequência.');
 }
 
 async function iniciarMemoria() {
@@ -545,6 +600,7 @@ async function continuarAutomaticoLuna() {
 planetElements.forEach(planet => {
   planet.addEventListener('click', async (e) => {
     if (lunaState !== 'waiting') return;
+    if (vozFalando) return;
     const clickedId = e.currentTarget.id;
 
     if (clickedId === lunaSequence[lunaPlayerIndex]) {
@@ -570,9 +626,9 @@ planetElements.forEach(planet => {
         feedbackMemoria.textContent = msg;
         feedbackMemoria.className = 'game-feedback success';
 
-        falar(ehNovoRecorde ? 'Novo recorde! Muito bem!' : 'Muito bem! Você conseguiu!');
+        await falar(ehNovoRecorde ? 'Novo recorde! Muito bem!' : 'Muito bem! Você conseguiu!');
 
-        await delay(1200);
+        await delay(400);
         await continuarAutomaticoLuna();
       }
     } else {
@@ -598,9 +654,9 @@ planetElements.forEach(planet => {
         `❌ Quase! Você acertou ${lunaPlayerIndex} de ${lunaSequence.length}. Vamos recomeçar do nível 1.`;
       feedbackMemoria.className = 'game-feedback error';
 
-      falar(`Quase! Você acertou ${lunaPlayerIndex} de ${lunaSequence.length}. Vamos recomeçar.`);
+      await falar(`Quase! Você acertou ${lunaPlayerIndex} de ${lunaSequence.length}. Vamos recomeçar.`);
 
-      await delay(1500);
+      await delay(400);
       await reiniciarAposErro();
     }
   });
@@ -695,12 +751,13 @@ function checkBoltWin() {
           startBoltGame();
         }
       });
-    }, 500);
+    }, 800);
   }
 }
 
 function handleBoltClick(event) {
   if (!boltAtivo) return;
+  if (vozFalando) return;
   const el = event.currentTarget;
   if (el.classList.contains('matched')) return;
   const value = el.dataset.value;
@@ -740,6 +797,7 @@ function handleBoltClick(event) {
     flashTela('acerto');
     el.classList.add('correct-flash');
     boltSelectedElement.classList.add('correct-flash');
+    falar('Acertou!');
 
     setTimeout(() => {
       el.classList.remove('correct-flash');
@@ -753,7 +811,6 @@ function handleBoltClick(event) {
 
     boltFeedback.textContent = `✅ Acerto! ${value} combinado.`;
     boltFeedback.className = 'game-feedback success';
-    falar('Acertou!');
 
     boltMatchesCompleted++;
     checkBoltWin();
@@ -763,6 +820,7 @@ function handleBoltClick(event) {
     flashTela('erro');
     el.classList.add('error');
     if (boltSelectedElement) boltSelectedElement.classList.add('error');
+    falar('Ops, não é essa. Tenta de novo.');
     setTimeout(() => {
       el.classList.remove('error');
       if (boltSelectedElement) boltSelectedElement.classList.remove('error');
@@ -770,7 +828,6 @@ function handleBoltClick(event) {
 
     boltFeedback.textContent = `❌ Erro! Não é a cor de ${boltSelectedElement.dataset.value}.`;
     boltFeedback.className = 'game-feedback error';
-    falar('Ops, não é essa. Tenta de novo.');
     if (boltSelectedElement) boltSelectedElement.classList.remove('selected');
     boltSelectedElement = null;
     boltTypeSelected = null;
@@ -976,12 +1033,13 @@ function checkMimiWin() {
           }
         }
       });
-    }, 500);
+    }, 800);
   }
 }
 
 function handleMimiClick(event) {
   if (!mimiAtivo) return;
+  if (vozFalando) return;
   const el = event.currentTarget;
   if (el.classList.contains('matched')) return;
   const value = parseInt(el.dataset.value);
@@ -1019,6 +1077,7 @@ function handleMimiClick(event) {
     flashTela('acerto');
     el.classList.add('correct-flash');
     mimiSelectedElement.classList.add('correct-flash');
+    falar('Acertou!');
 
     setTimeout(() => {
       el.classList.remove('correct-flash');
@@ -1032,7 +1091,6 @@ function handleMimiClick(event) {
 
     mimiFeedback.textContent = `✅ Acerto! Número ${value} combinado.`;
     mimiFeedback.className = 'game-feedback success';
-    falar('Acertou!');
     mimiMatchesCompleted++;
     checkMimiWin();
   } else {
@@ -1041,6 +1099,7 @@ function handleMimiClick(event) {
     flashTela('erro');
     el.classList.add('error');
     if (mimiSelectedElement) mimiSelectedElement.classList.add('error');
+    falar('Ops, não é esse. Tenta de novo.');
     setTimeout(() => {
       el.classList.remove('error');
       if (mimiSelectedElement) mimiSelectedElement.classList.remove('error');
@@ -1048,7 +1107,6 @@ function handleMimiClick(event) {
 
     mimiFeedback.textContent = `❌ Erro! ${mimiSelectedElement.textContent} não é ${el.textContent}.`;
     mimiFeedback.className = 'game-feedback error';
-    falar('Ops, não é esse. Tenta de novo.');
     if (mimiSelectedElement) mimiSelectedElement.classList.remove('selected');
     mimiSelectedElement = null;
     mimiTypeSelected = null;
@@ -1176,6 +1234,7 @@ function checkTikoWin() {
 
 function handleTikoClick(event) {
   if (!isTikoGameRunning) return;
+  if (vozFalando) return;
   const tile = event.currentTarget;
   const idx = parseInt(tile.dataset.index);
   const emptyIdx = puzzleState.indexOf(TILE_COUNT);
@@ -1212,7 +1271,7 @@ function handleTikoClick(event) {
             startTikoGame();
           }
         });
-      }, 700);
+      }, 800);
     } else {
       TIKO_FEEDBACK.textContent = 'Movimento realizado. Continue!';
       TIKO_FEEDBACK.className = 'game-feedback';
