@@ -129,11 +129,30 @@ if ('speechSynthesis' in window) {
 }
 
 /* ============================================ */
-/* TRAVA DE BOTÕES ENQUANTO A VOZ FALA          */
+/* TRAVA DE TELA ENQUANTO A VOZ FALA            */
 /* ============================================ */
-const botoesTravados = new Map();
 
+/**
+ * Bloqueia TODOS os cliques na tela enquanto a voz fala,
+ * usando um overlay invisível que cobre tudo.
+ * Não mexe em `disabled` dos botões (cada jogo controla isso).
+ */
 function travarBotoesDuranteFala() {
+  let overlay = document.getElementById('overlay-fala');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'overlay-fala';
+    overlay.style.position = 'fixed';
+    overlay.style.inset = '0';
+    overlay.style.zIndex = '9999';
+    overlay.style.background = 'transparent';
+    overlay.style.cursor = 'wait';
+    overlay.style.pointerEvents = 'auto';
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'block';
+
+  // Feedback visual: deixa os botões com opacidade reduzida
   const seletores = [
     '.game-action-button',
     '.planet',
@@ -144,26 +163,20 @@ function travarBotoesDuranteFala() {
     '.level-option',
     '#btn-welcome-ok'
   ];
-
   seletores.forEach(sel => {
     document.querySelectorAll(sel).forEach(btn => {
-      if (!botoesTravados.has(btn)) {
-        botoesTravados.set(btn, btn.disabled);
-      }
-      btn.disabled = true;
       btn.classList.add('travado-fala');
     });
   });
 }
 
 function liberarBotoesAposFala() {
-  if (vozFalando) return;
+  const overlay = document.getElementById('overlay-fala');
+  if (overlay) overlay.style.display = 'none';
 
-  botoesTravados.forEach((estadoAnterior, btn) => {
-    btn.disabled = estadoAnterior;
+  document.querySelectorAll('.travado-fala').forEach(btn => {
     btn.classList.remove('travado-fala');
   });
-  botoesTravados.clear();
 }
 
 /* ============================================ */
