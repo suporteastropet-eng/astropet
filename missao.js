@@ -7,6 +7,9 @@ let vozAtiva = true;
 let vozDesbloqueada = false;
 let vozFalando = false;
 
+// Fila: só uma fala roda por vez
+let filaFala = Promise.resolve();
+
 function carregarPreferenciaVoz() {
   try {
     const raw = localStorage.getItem(VOZ_KEY);
@@ -66,62 +69,135 @@ function desbloquearVoz() {
 });
 
 /**
- * Fala um texto em português do Brasil e RETORNA UMA PROMISE
- * que resolve quando a fala terminar (ou se a voz estiver desligada).
+ * Fala UM texto. Retorna Promise que resolve no onend/onerror.
+ * Tem retry automático se a fala não começar.
  */
-function falar(texto, opcoes = {}) {
+function falarUmTexto(texto, opcoes, tentativa = 1) {
   return new Promise((resolve) => {
-    if (!vozAtiva || !('speechSynthesis' in window)) {
+    if (!('speechSynthesis' in window)) {
       resolve();
       return;
     }
 
     try {
       if (!vozDesbloqueada) desbloquearVoz();
+
+      // Pequeno delay após cancel evita bug do Chrome
       speechSynthesis.cancel();
 
-      const u = new SpeechSynthesisUtterance(texto);
-      u.lang = 'pt-BR';
-      u.rate = opcoes.rate || 0.95;
-      u.pitch = opcoes.pitch || 1.15;
-      u.volume = opcoes.volume || 1.0;
-
-      const vozes = speechSynthesis.getVoices();
-      const vozPtBR = vozes.find(v => v.lang && v.lang.toLowerCase().startsWith('pt-br'))
-        || vozes.find(v => v.lang && v.lang.toLowerCase().startsWith('pt'));
-      if (vozPtBR) u.voice = vozPtBR;
-
-      vozFalando = true;
-      document.body.classList.add('falando');
-      travarBotoesDuranteFala();
-
-      const finalizar = () => {
-        vozFalando = false;
-        document.body.classList.remove('falando');
-        liberarBotoesAposFala();
-        resolve();
-      };
-
-      u.onend = finalizar;
-      u.onerror = finalizar;
-
-      speechSynthesis.speak(u);
-
-      // Safety: se em 8s não terminou, libera tudo
       setTimeout(() => {
-        if (vozFalando) {
-          try { speechSynthesis.cancel(); } catch (e) {}
-          finalizar();
-        }
-      }, 8000);
+        const u = new SpeechSynthesisUtterance(texto);
+        u.lang = 'pt-BR';
+        u.rate = opcoes.rate || 0.95;
+        u.pitch = opcoes.pitch || 1.15;
+        u.volume = opcoes.volume || 1.0;
 
+        const vozes = speechSynthesis.getVoices();
+        const vozPtBR = vozes.find(v => v.lang && v.lang.toLowerCase().startsWith('pt-br'))
+          || vozes.find(v => v.lang && v.lang.toLowerCase().startsWith('pt'));
+        if (vozPtBR) u.voice = vozPtBR;
+
+        let finalizado = false;
+        let iniciou = false;
+
+        const finalizar = () => {
+          if (finalizado) return;
+          finalizado = true;
+          clearTimeout(timeoutDuracao);
+          clearTimeout(timeoutInicio);
+          clearInterval(resumeInterval);
+          resolve();
+        };
+
+        u.onstart = () => {
+          iniciou = true;
+        };
+
+        u.onend = () => {
+          finalizar();
+        };
+
+        u.onerror = (e) => {
+          // "interrupted" acontece quando cancel() é chamado antes.
+          // "canceled" idem. Nesses casos, tentar de novo.
+          if ((e.error === 'interrupted' || e.error === 'canceled') && tentativa < 2) {
+            if (finalizado) return;
+            finalizado = true;
+            clearTimeout(timeoutDuracao);
+            clearTimeout(timeoutInicio);
+            clearInterval(resumeInterval);
+            // Retry com pequeno delay
+            setTimeout(() => {
+              falarUmTexto(texto, opcoes, tentativa + 1).then(resolve);
+            }, 200);
+            return;
+          }
+          finalizar();
+        };
+
+        // Watchdog 1: se não começou em 1.5s, tenta de novo
+        const timeoutInicio = setTimeout(() => {
+          if (!iniciou && !finalizado && tentativa < 2) {
+            try { speechSynthesis.cancel(); } catch (e) {}
+            finalizado = true;
+            setTimeout(() => {
+              falarUmTexto(texto, opcoes, tentativa + 1).then(resolve);
+            }, 200);
+          }
+        }, 1500);
+
+        // Watchdog 2: duração máxima proporcional ao texto (mín 4s, máx 20s)
+        const duracaoMax = Math.max(4000, Math.min(20000, texto.length * 80 + 3000));
+        const timeoutDuracao = setTimeout(() => {
+          if (!finalizado) {
+            try { speechSynthesis.cancel(); } catch (e) {}
+            finalizar();
+          }
+        }, duracaoMax);
+
+        // Chrome às vezes "pausa" a síntese sozinho. Força resume a cada 5s.
+        const resumeInterval = setInterval(() => {
+          try {
+            if (speechSynthesis.paused) speechSynthesis.resume();
+          } catch (e) {}
+        }, 5000);
+
+        speechSynthesis.speak(u);
+
+      }, 60); // delay após cancel
     } catch (e) {
-      vozFalando = false;
-      document.body.classList.remove('falando');
-      liberarBotoesAposFala();
       resolve();
     }
   });
+}
+
+/**
+ * Fala uma fila de textos (um após o outro).
+ * Retorna Promise que resolve quando TODOS terminarem.
+ */
+function falar(texto, opcoes = {}) {
+  if (!vozAtiva) return Promise.resolve();
+
+  // Enfileira para não sobrepor falas
+  filaFala = filaFala.then(async () => {
+    if (!vozAtiva) return;
+
+    vozFalando = true;
+    document.body.classList.add('falando');
+    travarBotoesDuranteFala();
+
+    try {
+      await falarUmTexto(texto, opcoes);
+    } catch (e) {
+      // ignora
+    }
+
+    vozFalando = false;
+    document.body.classList.remove('falando');
+    liberarBotoesAposFala();
+  });
+
+  return filaFala;
 }
 
 if ('speechSynthesis' in window) {
@@ -131,12 +207,6 @@ if ('speechSynthesis' in window) {
 /* ============================================ */
 /* TRAVA DE TELA ENQUANTO A VOZ FALA            */
 /* ============================================ */
-
-/**
- * Bloqueia TODOS os cliques na tela enquanto a voz fala,
- * usando um overlay invisível que cobre tudo.
- * Não mexe em `disabled` dos botões (cada jogo controla isso).
- */
 function travarBotoesDuranteFala() {
   let overlay = document.getElementById('overlay-fala');
   if (!overlay) {
@@ -152,7 +222,6 @@ function travarBotoesDuranteFala() {
   }
   overlay.style.display = 'block';
 
-  // Feedback visual: deixa os botões com opacidade reduzida
   const seletores = [
     '.game-action-button',
     '.planet',
