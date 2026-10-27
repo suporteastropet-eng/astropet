@@ -1217,6 +1217,21 @@ body.falando .welcome-panel .welcome-title::after {
   .pet-orbit img { opacity: 0.28; }
 }
 
+/* Overlay invisível que bloqueia cliques durante a fala */
+#overlay-fala {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: transparent;
+  cursor: wait;
+  display: none;
+}
+
+/* Quando a voz está falando, o cursor fica "wait" em toda a tela */
+body.falando {
+  cursor: wait;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pet-orbit img { animation: none !important; opacity: 0.2; }
   #orbit-luna img { top: 10%; left: 0; }
