@@ -83,7 +83,8 @@ body.erro {
 .header-top {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
+  gap: 10px;
   max-width: 1180px;
   margin: 0 auto 12px;
   padding: 0 4px;
@@ -113,6 +114,36 @@ body.erro {
 .btn-inicio:focus-visible {
   outline: 4px solid #f2e884;
   outline-offset: 3px;
+}
+
+.btn-voz {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: rgba(144, 208, 255, 0.1);
+  border: 2px solid rgba(144, 208, 255, 0.4);
+  border-radius: 50%;
+  color: #90d0ff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-voz:hover {
+  background: rgba(144, 208, 255, 0.22);
+  border-color: #90d0ff;
+  transform: translateY(-1px);
+}
+.btn-voz:focus-visible {
+  outline: 4px solid #f2e884;
+  outline-offset: 3px;
+}
+.btn-voz.mudo {
+  opacity: 0.45;
+  border-style: dashed;
 }
 
 .page-title {
@@ -233,7 +264,6 @@ body.erro {
   color: #ffffff;
   margin-bottom: 8px;
 }
-/* Melhoria de contraste: texto mais claro e legível */
 .mission-description {
   font-size: 0.9rem;
   color: #e2e8f8;
@@ -1149,6 +1179,12 @@ body.erro {
   .welcome-message { font-size: 0.9rem; }
   .welcome-pets img { width: 44px; height: 44px; }
 
+  .btn-voz {
+    width: 40px;
+    height: 40px;
+    font-size: 1.05rem;
+  }
+
   .pet-orbit img { opacity: 0.28; width: clamp(50px, 12vw, 70px); }
   #orbit-tiko img { width: clamp(60px, 14vw, 85px); }
 
@@ -1158,59 +1194,6 @@ body.erro {
     50%  { left: calc(100% - clamp(50px, 12vw, 70px)); top: calc(100% - clamp(50px, 12vw, 70px)); }
     75%  { left: 0%; top: calc(100% - clamp(50px, 12vw, 70px)); }
     100% { left: 0%; top: 0%; }
-  }
-}
-
-/* ============================================ */
-/* BOTÃO DE VOZ                                 */
-/* ============================================ */
-.header-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.btn-voz {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  background: rgba(144, 208, 255, 0.1);
-  border: 2px solid rgba(144, 208, 255, 0.4);
-  border-radius: 50%;
-  color: #90d0ff;
-  font-size: 1.2rem;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, transform 0.15s;
-  -webkit-tap-highlight-color: transparent;
-}
-.btn-voz:hover {
-  background: rgba(144, 208, 255, 0.22);
-  border-color: #90d0ff;
-  transform: translateY(-1px);
-}
-.btn-voz:focus-visible {
-  outline: 4px solid #f2e884;
-  outline-offset: 3px;
-}
-.btn-voz.mudo {
-  opacity: 0.45;
-  border-style: dashed;
-}
-
-/* Estado do overlay quando está lendo (feedback visual opcional) */
-body.falando .modal-content h2 {
-  animation: nada-piscar 0.3s ease;
-}
-
-@media (max-width: 560px) {
-  .btn-voz {
-    width: 40px;
-    height: 40px;
-    font-size: 1.05rem;
   }
 }
 
