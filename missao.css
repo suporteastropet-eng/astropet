@@ -41,19 +41,13 @@ body {
 
 body.modal-open { overflow: hidden; }
 
-/* Flash verde quando acerta (feedback sensorial) */
-body.acerto {
-  animation: tela-acerto 0.35s ease;
-}
+body.acerto { animation: tela-acerto 0.35s ease; }
 @keyframes tela-acerto {
   0%, 100% { box-shadow: inset 0 0 0 0 transparent; }
   50% { box-shadow: inset 0 0 0 10px rgba(126, 232, 126, 0.6); }
 }
 
-/* Flash vermelho quando erra */
-body.erro {
-  animation: tela-erro 0.4s ease;
-}
+body.erro { animation: tela-erro 0.4s ease; }
 @keyframes tela-erro {
   0%, 100% { box-shadow: inset 0 0 0 0 transparent; }
   30% { box-shadow: inset 0 0 0 10px rgba(255, 120, 120, 0.55); }
@@ -796,7 +790,6 @@ body.erro {
 /* ============================================ */
 /* PETS CONTORNANDO A TELA                      */
 /* ============================================ */
-
 .pet-orbit {
   position: fixed;
   inset: 0;
@@ -1107,6 +1100,20 @@ body.falando .welcome-panel .welcome-title::after {
   50% { opacity: 1; }
 }
 
+/* Overlay invisível que bloqueia cliques durante a fala */
+#overlay-fala {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: transparent;
+  cursor: wait;
+  display: none;
+}
+
+body.falando {
+  cursor: wait;
+}
+
 /* ============================================ */
 /* RESPONSIVO                                   */
 /* ============================================ */
@@ -1215,21 +1222,6 @@ body.falando .welcome-panel .welcome-title::after {
   }
 
   .pet-orbit img { opacity: 0.28; }
-}
-
-/* Overlay invisível que bloqueia cliques durante a fala */
-#overlay-fala {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: transparent;
-  cursor: wait;
-  display: none;
-}
-
-/* Quando a voz está falando, o cursor fica "wait" em toda a tela */
-body.falando {
-  cursor: wait;
 }
 
 @media (prefers-reduced-motion: reduce) {
