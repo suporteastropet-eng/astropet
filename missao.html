@@ -28,7 +28,6 @@
 <body>
   <canvas id="stars"></canvas>
 
-  <!-- Pets contornando a tela -->
   <div class="pet-orbit" id="orbit-luna"><img src="luna.png" alt=""></div>
   <div class="pet-orbit" id="orbit-bolt"><img src="Bolt.png" alt=""></div>
   <div class="pet-orbit" id="orbit-mimi"><img src="mimi.png" alt=""></div>
@@ -37,6 +36,7 @@
   <header class="page-header">
     <div class="header-top">
       <a href="index.html" class="btn-inicio" aria-label="Voltar ao início">← Início</a>
+      <button class="btn-voz" id="btn-voz" aria-label="Desligar narração" title="Ligar/desligar narração">🔊</button>
     </div>
     <h1 class="page-title">Escolha sua Missão</h1>
     <div class="page-subtitle">AstroPets</div>
@@ -82,7 +82,6 @@
       <h2 id="luna-title" tabindex="-1">Missão: Memória Cósmica da Luna</h2>
       <p>Observe a sequência e repita na mesma ordem.</p>
 
-      <!-- Contador de progresso da Luna -->
       <div class="luna-progress" id="luna-progress" aria-live="polite">
         <span class="progress-label">Passo:</span>
         <div class="progress-dots" id="luna-progress-dots"></div>
@@ -198,7 +197,7 @@
     </div>
   </div>
 
-  <!-- TUTORIAL DE BOAS-VINDAS (primeira visita) -->
+  <!-- TUTORIAL DE BOAS-VINDAS -->
   <div id="welcomeOverlay" class="welcome-overlay" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
     <div class="welcome-panel">
       <div class="welcome-stars" aria-hidden="true">
