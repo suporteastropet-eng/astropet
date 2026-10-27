@@ -1079,6 +1079,35 @@ body.erro {
 }
 
 /* ============================================ */
+/* BOTÕES TRAVADOS DURANTE A FALA               */
+/* ============================================ */
+.game-action-button.travado-fala,
+.planet.travado-fala,
+.match-item.travado-fala,
+.puzzle-tile.travado-fala,
+.level-option.travado-fala {
+  opacity: 0.5;
+  cursor: wait;
+  pointer-events: none;
+}
+
+body.falando .modal-content h2 {
+  opacity: 0.85;
+}
+
+body.falando .modal-content h2::after,
+body.falando .welcome-panel .welcome-title::after {
+  content: ' 🔉';
+  font-size: 0.8em;
+  animation: pulso-fala 1s ease-in-out infinite;
+}
+
+@keyframes pulso-fala {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ============================================ */
 /* RESPONSIVO                                   */
 /* ============================================ */
 @media (max-width: 1080px) {
@@ -1185,16 +1214,7 @@ body.erro {
     font-size: 1.05rem;
   }
 
-  .pet-orbit img { opacity: 0.28; width: clamp(50px, 12vw, 70px); }
-  #orbit-tiko img { width: clamp(60px, 14vw, 85px); }
-
-  @keyframes contornar-tela {
-    0%   { left: 0%; top: 0%; }
-    25%  { left: calc(100% - clamp(50px, 12vw, 70px)); top: 0%; }
-    50%  { left: calc(100% - clamp(50px, 12vw, 70px)); top: calc(100% - clamp(50px, 12vw, 70px)); }
-    75%  { left: 0%; top: calc(100% - clamp(50px, 12vw, 70px)); }
-    100% { left: 0%; top: 0%; }
-  }
+  .pet-orbit img { opacity: 0.28; }
 }
 
 @media (prefers-reduced-motion: reduce) {
