@@ -5,24 +5,22 @@ const ARQUIVOS = [
   './',
   './index.html',
   './missao.html',
+  './missao.css',       // ← NOVO
+  './missao.js',        // ← NOVO
   './manifest.json',
-  // Pets
   './luna.png',
   './Bolt.png',
   './mimi.png',
   './tiko.png',
   './pet-extra.png',
   './tiko_puzzle_image.png',
-  // Ícones
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
   './icons/apple-touch-icon.png',
-  // Fonte Poppins
   './fonts/Poppins-Regular.woff2',
   './fonts/Poppins-SemiBold.woff2',
   './fonts/Poppins-Bold.woff2',
-  // Sons
   './sons/acerto.mp3',
   './sons/erro.mp3'
 ];
