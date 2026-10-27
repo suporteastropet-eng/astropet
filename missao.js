@@ -1,4 +1,85 @@
 /* ============================================ */
+/* NARRAÇÃO POR VOZ (Web Speech API)            */
+/* ============================================ */
+const VOZ_KEY = 'astropets_voz_ativa';
+
+let vozAtiva = true;
+let vozIniciada = false;
+
+function carregarPreferenciaVoz() {
+  try {
+    const raw = localStorage.getItem(VOZ_KEY);
+    if (raw === '0') vozAtiva = false;
+    else vozAtiva = true;
+  } catch (e) {
+    vozAtiva = true;
+  }
+  atualizarBotaoVoz();
+}
+
+function salvarPreferenciaVoz() {
+  try {
+    localStorage.setItem(VOZ_KEY, vozAtiva ? '1' : '0');
+  } catch (e) {}
+}
+
+function atualizarBotaoVoz() {
+  const btn = document.getElementById('btn-voz');
+  if (!btn) return;
+  btn.textContent = vozAtiva ? '🔊' : '🔇';
+  btn.classList.toggle('mudo', !vozAtiva);
+  btn.setAttribute('aria-label', vozAtiva ? 'Desligar narração' : 'Ligar narração');
+}
+
+function toggleVoz() {
+  vozAtiva = !vozAtiva;
+  salvarPreferenciaVoz();
+  atualizarBotaoVoz();
+  if (!vozAtiva) {
+    try { speechSynthesis.cancel(); } catch (e) {}
+  } else {
+    falar('Narração ligada');
+  }
+}
+
+/**
+ * Fala um texto em português do Brasil.
+ * Cancela a fala anterior para não sobrepor.
+ */
+function falar(texto, opcoes = {}) {
+  if (!vozAtiva) return;
+  if (!('speechSynthesis' in window)) return;
+
+  try {
+    speechSynthesis.cancel();
+
+    const u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'pt-BR';
+    u.rate = opcoes.rate || 0.95;
+    u.pitch = opcoes.pitch || 1.15;
+    u.volume = opcoes.volume || 1.0;
+
+    const vozes = speechSynthesis.getVoices();
+    const vozPtBR = vozes.find(v => v.lang && v.lang.toLowerCase().startsWith('pt-br'))
+      || vozes.find(v => v.lang && v.lang.toLowerCase().startsWith('pt'));
+    if (vozPtBR) u.voice = vozPtBR;
+
+    document.body.classList.add('falando');
+    u.onend = () => document.body.classList.remove('falando');
+    u.onerror = () => document.body.classList.remove('falando');
+
+    speechSynthesis.speak(u);
+    vozIniciada = true;
+  } catch (e) {
+    // silencia erros
+  }
+}
+
+if ('speechSynthesis' in window) {
+  speechSynthesis.onvoiceschanged = () => {};
+}
+
+/* ============================================ */
 /* SONS E VIBRAÇÃO                              */
 /* ============================================ */
 let audioCtx = null;
@@ -13,7 +94,7 @@ function iniciarAudio() {
     audioIniciado = true;
     fetch('sons/acerto.mp3').then(r => r.arrayBuffer()).then(b => audioCtx.decodeAudioData(b)).then(buf => { somAcertoBuffer = buf; }).catch(() => {});
     fetch('sons/erro.mp3').then(r => r.arrayBuffer()).then(b => audioCtx.decodeAudioData(b)).then(buf => { somErroBuffer = buf; }).catch(() => {});
-  } catch (e) { /* sem áudio */ }
+  } catch (e) {}
 }
 
 document.addEventListener('pointerdown', iniciarAudio, { once: true });
@@ -30,7 +111,7 @@ function beep(freq, dur) {
     osc.connect(gain).connect(audioCtx.destination);
     osc.start();
     osc.stop(audioCtx.currentTime + dur);
-  } catch (e) { /* ignora */ }
+  } catch (e) {}
 }
 
 function tocarAcerto() {
@@ -62,10 +143,8 @@ function tocarErro() {
 function vibrarAcerto() { if (navigator.vibrate) navigator.vibrate(40); }
 function vibrarErro() { if (navigator.vibrate) navigator.vibrate([80, 40, 80]); }
 
-/* Flash na tela inteira (feedback sensorial) */
 function flashTela(tipo) {
   document.body.classList.remove('acerto', 'erro');
-  // Força reflow para reiniciar a animação
   void document.body.offsetWidth;
   document.body.classList.add(tipo);
   setTimeout(() => {
@@ -146,6 +225,7 @@ function verificarBoasVindas() {
         const btn = document.getElementById('btn-welcome-ok');
         if (btn) btn.focus();
       }, 100);
+      falar('Oi! Eu sou a Luna. Escolha uma missão para brincar comigo e meus amigos.');
     }
   }
 }
@@ -155,13 +235,8 @@ function fecharBoasVindas() {
   if (overlay) overlay.classList.remove('active');
   document.body.classList.remove('modal-open');
   try { localStorage.setItem(WELCOME_KEY, '1'); } catch (e) {}
+  falar('Vamos jogar!');
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('btn-welcome-ok');
-  if (btn) btn.addEventListener('click', fecharBoasVindas);
-  verificarBoasVindas();
-});
 
 /* ============================================ */
 /* CONTROLE DE MODAIS                           */
@@ -179,6 +254,14 @@ function openGame(petId) {
   lastFocusedElement = document.activeElement;
 
   iniciarAudio();
+
+  const falas = {
+    luna: 'Missão da Luna. Observe a sequência e repita.',
+    bolt: 'Missão do Bolt. Combine as cores.',
+    mimi: 'Missão da Mimi. Combine os números.',
+    tiko: 'Missão do Tiko. Reorganize o quebra-cabeça.'
+  };
+  falar(falas[petId] || 'Missão iniciada');
 
   const modal = document.getElementById(modalId);
   modal.classList.add('active');
@@ -267,6 +350,8 @@ function mostrarVitoria(petId, opcoes) {
   overlay.classList.add('active');
   document.body.classList.add('modal-open');
 
+  falar(`Parabéns, ${nomes[petId] || 'AstroPet'}! Você completou a missão!`);
+
   setTimeout(() => title.focus(), 50);
 }
 
@@ -320,7 +405,6 @@ function liberarPlanetas() {
   planetElements.forEach(p => p.disabled = false);
 }
 
-/* Atualiza as bolinhas de progresso */
 function renderProgressoLuna() {
   if (!lunaProgressDots) return;
   lunaProgressDots.innerHTML = '';
@@ -360,6 +444,7 @@ async function piscarSequenciaInteira() {
   feedbackMemoria.textContent = `👀 Observe com atenção... (${lunaSequence.length} ${lunaSequence.length === 1 ? 'passo' : 'passos'})`;
   feedbackMemoria.className = 'game-feedback observing';
   renderProgressoLuna();
+  falar(`Observe com atenção. ${lunaSequence.length} ${lunaSequence.length === 1 ? 'passo' : 'passos'}`);
 
   await delay(600);
 
@@ -379,6 +464,7 @@ async function piscarSequenciaInteira() {
   feedbackMemoria.className = 'game-feedback your-turn';
   planetElements.forEach(p => p.classList.add('turn-active'));
   renderProgressoLuna();
+  falar('Sua vez! Repita a sequência.');
 }
 
 async function iniciarMemoria() {
@@ -445,6 +531,8 @@ planetElements.forEach(planet => {
         feedbackMemoria.textContent = msg;
         feedbackMemoria.className = 'game-feedback success';
 
+        falar(ehNovoRecorde ? 'Novo recorde! Muito bem!' : 'Muito bem! Você conseguiu!');
+
         await delay(1200);
         await continuarAutomaticoLuna();
       }
@@ -457,7 +545,6 @@ planetElements.forEach(planet => {
       vibrarErro();
       flashTela('erro');
 
-      // Marca a bolinha atual como erro
       if (lunaProgressDots) {
         const dots = lunaProgressDots.querySelectorAll('.progress-dot');
         if (dots[lunaPlayerIndex]) {
@@ -471,6 +558,8 @@ planetElements.forEach(planet => {
       feedbackMemoria.textContent =
         `❌ Quase! Você acertou ${lunaPlayerIndex} de ${lunaSequence.length}. Vamos recomeçar do nível 1.`;
       feedbackMemoria.className = 'game-feedback error';
+
+      falar(`Quase! Você acertou ${lunaPlayerIndex} de ${lunaSequence.length}. Vamos recomeçar.`);
 
       await delay(1500);
       await reiniciarAposErro();
@@ -542,6 +631,7 @@ function generateBoltGame(ativo) {
 function startBoltGame() {
   generateBoltGame(true);
   document.getElementById('btn-bolt-start').textContent = 'Reiniciar Jogo';
+  falar('Vamos lá! Escolha uma cor.');
 }
 
 function resetBoltGame() {
@@ -555,6 +645,7 @@ function checkBoltWin() {
     document.querySelectorAll('#bolt-match-grid .match-item').forEach(b => b.disabled = true);
     boltFeedback.textContent = '🎉 Parabéns! Todas as cores foram assimiladas!';
     boltFeedback.className = 'game-feedback success';
+    falar('Parabéns! Você combinou todas as cores!');
 
     setTimeout(() => {
       mostrarVitoria('bolt', {
@@ -623,6 +714,7 @@ function handleBoltClick(event) {
 
     boltFeedback.textContent = `✅ Acerto! ${value} combinado.`;
     boltFeedback.className = 'game-feedback success';
+    falar('Acertou!');
 
     boltMatchesCompleted++;
     checkBoltWin();
@@ -639,6 +731,7 @@ function handleBoltClick(event) {
 
     boltFeedback.textContent = `❌ Erro! Não é a cor de ${boltSelectedElement.dataset.value}.`;
     boltFeedback.className = 'game-feedback error';
+    falar('Ops, não é essa. Tenta de novo.');
     if (boltSelectedElement) boltSelectedElement.classList.remove('selected');
     boltSelectedElement = null;
     boltTypeSelected = null;
@@ -748,6 +841,7 @@ function escolherNivelMimi(levelId) {
   mimiFeedback.textContent = "Clique em 'Iniciar Nível' para começar.";
   btnMimiMain.textContent = 'Iniciar Nível';
   btnMimiMain.onclick = startMimiGame;
+  falar(`Nível ${levelId} escolhido. Clique em iniciar.`);
 }
 
 function voltarEscolherNivelMimi() {
@@ -804,6 +898,7 @@ function startMimiGame() {
   generateMimiGame(true);
   btnMimiMain.textContent = 'Reiniciar Nível';
   btnMimiMain.onclick = startMimiGame;
+  falar('Vamos lá! Combine os números.');
 }
 
 function resetMimiGame() {
@@ -823,6 +918,7 @@ function checkMimiWin() {
     mimiAtivo = false;
     mimiFeedback.textContent = `🎉 Parabéns! Você completou o ${getMimiLevelData(mimiCurrentLevel).label}!`;
     mimiFeedback.className = 'game-feedback success';
+    falar('Parabéns! Você completou o nível!');
     document.querySelectorAll('#mimi-game-step .match-item').forEach(b => b.disabled = true);
 
     const levelData = getMimiLevelData(mimiCurrentLevel);
@@ -897,6 +993,7 @@ function handleMimiClick(event) {
 
     mimiFeedback.textContent = `✅ Acerto! Número ${value} combinado.`;
     mimiFeedback.className = 'game-feedback success';
+    falar('Acertou!');
     mimiMatchesCompleted++;
     checkMimiWin();
   } else {
@@ -912,6 +1009,7 @@ function handleMimiClick(event) {
 
     mimiFeedback.textContent = `❌ Erro! ${mimiSelectedElement.textContent} não é ${el.textContent}.`;
     mimiFeedback.className = 'game-feedback error';
+    falar('Ops, não é esse. Tenta de novo.');
     if (mimiSelectedElement) mimiSelectedElement.classList.remove('selected');
     mimiSelectedElement = null;
     mimiTypeSelected = null;
@@ -1000,6 +1098,7 @@ function startTikoGame() {
   TIKO_FEEDBACK.textContent = 'Clique nas peças adjacentes ao espaço vazio para movê-las.';
   TIKO_FEEDBACK.className = 'game-feedback your-turn';
   document.getElementById('btn-tiko-start').textContent = 'Reiniciar Quebra-cabeça';
+  falar('Mova as peças para formar a imagem.');
 }
 
 function resetTikoGame() {
@@ -1054,6 +1153,7 @@ function handleTikoClick(event) {
       isTikoGameRunning = false;
       TIKO_FEEDBACK.textContent = '🏆 Missão Completa! Tiko está feliz com a imagem restaurada!';
       TIKO_FEEDBACK.className = 'game-feedback success';
+      falar('Parabéns! Você conseguiu!');
       const finalTile = TIKO_GRID.querySelector(`[data-value="${TILE_COUNT}"]`);
       if (finalTile) {
         finalTile.classList.remove('empty');
@@ -1084,6 +1184,7 @@ function handleTikoClick(event) {
     flashTela('erro');
     TIKO_FEEDBACK.textContent = '❌ Clique em uma peça adjacente ao espaço vazio.';
     TIKO_FEEDBACK.className = 'game-feedback error';
+    falar('Escolha uma peça perto do espaço vazio.');
     setTimeout(() => {
       if (isTikoGameRunning) {
         TIKO_FEEDBACK.textContent = 'Continue a missão!';
@@ -1133,6 +1234,17 @@ drawStars();
 /* INICIALIZAÇÃO                                */
 /* ============================================ */
 atualizarRecordeLuna();
+carregarPreferenciaVoz();
+
+document.addEventListener('DOMContentLoaded', () => {
+  const btnVoz = document.getElementById('btn-voz');
+  if (btnVoz) btnVoz.addEventListener('click', toggleVoz);
+
+  const btnWelcome = document.getElementById('btn-welcome-ok');
+  if (btnWelcome) btnWelcome.addEventListener('click', fecharBoasVindas);
+
+  verificarBoasVindas();
+});
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
