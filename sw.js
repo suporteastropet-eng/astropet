@@ -1,12 +1,12 @@
 // AstroPets – Service Worker (cache para uso offline)
-const VERSION = 'astropets-v13';
+const VERSION = 'astropets-v18';
 
 const ARQUIVOS = [
   './',
   './index.html',
   './missao.html',
-  './missao.css',       // ← NOVO
-  './missao.js',        // ← NOVO
+  './missao.css',
+  './missao.js',
   './manifest.json',
   './luna.png',
   './Bolt.png',
