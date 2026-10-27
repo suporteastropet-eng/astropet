@@ -1,5 +1,5 @@
 // AstroPets – Service Worker (cache para uso offline)
-const VERSION = 'astropets-v23';
+const VERSION = 'astropets-v26';
 
 const ARQUIVOS = [
   './',
