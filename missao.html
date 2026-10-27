@@ -13,8 +13,30 @@
   <title>AstroPets - Escolha sua Missão</title>
   <style>
     /* ============================================ */
-    /* RESET E BASE                                 */
+    /* FONTE POPPINS EMBUTIDA (OFFLINE)             */
     /* ============================================ */
+    @font-face {
+      font-family: 'Poppins';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url('fonts/Poppins-Regular.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Poppins';
+      font-style: normal;
+      font-weight: 600;
+      font-display: swap;
+      src: url('fonts/Poppins-SemiBold.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Poppins';
+      font-style: normal;
+      font-weight: 700;
+      font-display: swap;
+      src: url('fonts/Poppins-Bold.woff2') format('woff2');
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
 
@@ -31,6 +53,9 @@
       align-items: center;
     }
 
+    /* Trava rolagem quando modal aberto */
+    body.modal-open { overflow: hidden; }
+
     #stars {
       position: fixed;
       inset: 0;
@@ -41,15 +66,67 @@
     }
 
     /* ============================================ */
-    /* HEADER / TÍTULO                              */
+    /* HEADER COM BOTÃO INÍCIO E PROGRESSO          */
     /* ============================================ */
     .page-header {
       position: relative;
       z-index: 1;
       text-align: center;
-      padding: 48px 20px 32px;
+      padding: 32px 20px 24px;
       width: 100%;
     }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1180px;
+      margin: 0 auto 16px;
+      padding: 0 8px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-inicio {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 18px;
+      min-height: 44px;
+      background: rgba(144, 208, 255, 0.1);
+      border: 2px solid rgba(144, 208, 255, 0.4);
+      border-radius: 50px;
+      color: #90d0ff;
+      font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    }
+    .btn-inicio:hover {
+      background: rgba(144, 208, 255, 0.22);
+      border-color: #90d0ff;
+      transform: translateY(-1px);
+    }
+    .btn-inicio:focus-visible {
+      outline: 4px solid #f2e884;
+      outline-offset: 3px;
+    }
+
+    .progress-info {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: rgba(242, 232, 132, 0.1);
+      border: 2px solid rgba(242, 232, 132, 0.35);
+      border-radius: 50px;
+      color: #f2e884;
+      font-weight: 600;
+      font-size: 0.95rem;
+      min-height: 40px;
+    }
+
     .page-title {
       font-size: clamp(1.8rem, 4vw, 2.8rem);
       font-weight: 700;
@@ -86,7 +163,8 @@
       flex: 1 1 0;
       max-width: 260px;
       min-width: 200px;
-      aspect-ratio: 1 / 1;
+      aspect-ratio: auto;
+      min-height: 260px;
       background: linear-gradient(160deg, rgba(30, 30, 100, 0.85), rgba(10, 10, 50, 0.9));
       border: 2px solid rgba(230, 224, 91, 0.65);
       border-radius: 22px;
@@ -96,13 +174,11 @@
       align-items: center;
       text-align: center;
       cursor: pointer;
-      padding: 20px 14px;
+      padding: 24px 16px;
       transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
       position: relative;
       overflow: hidden;
     }
-
-    /* Removida a animação infinita (float-mission) para reduzir estímulo visual */
 
     .mission-square::before {
       content: '';
@@ -138,23 +214,40 @@
       filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
     }
     .pet-name {
-      font-size: 1.15rem;
+      font-size: 1.2rem;
       font-weight: 700;
       color: var(--accent, #e6e05b);
       letter-spacing: 0.5px;
       margin-bottom: 4px;
     }
     .mission-name {
-      font-size: 1rem;
+      font-size: 1.05rem;
       font-weight: 600;
       color: #e7e9ff;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
     .mission-description {
-      font-size: 0.78rem;
-      color: #a8b4d9;
-      line-height: 1.4;
+      font-size: 0.95rem;
+      color: #c5cfeb;
+      line-height: 1.5;
       padding: 0 4px;
+    }
+
+    /* Estrela de missão concluída no card */
+    .mission-star {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      font-size: 1.6rem;
+      filter: drop-shadow(0 0 8px rgba(242, 232, 132, 0.9));
+      display: none;
+      animation: star-pop 0.5s ease;
+    }
+    .mission-square.completed .mission-star { display: block; }
+    @keyframes star-pop {
+      0% { transform: scale(0) rotate(-45deg); }
+      70% { transform: scale(1.2) rotate(10deg); }
+      100% { transform: scale(1) rotate(0); }
     }
 
     /* ============================================ */
@@ -249,15 +342,18 @@
       transform: translateY(-2px);
       box-shadow: 0 10px 28px rgba(144, 208, 255, 0.45);
     }
-    .game-action-button:active {
-      transform: translateY(0);
-    }
+    .game-action-button:active { transform: translateY(0); }
     .game-action-button:focus-visible {
       outline: 4px solid #f2e884;
       outline-offset: 3px;
     }
+    .game-action-button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
 
-    /* CAIXA DE FEEDBACK (substitui o mimi-feedback solto) */
     .game-feedback {
       font-size: 1rem;
       font-weight: 500;
@@ -278,7 +374,7 @@
     .game-feedback.error { color: #ff9a9a; background: rgba(255, 154, 154, 0.1); border-color: rgba(255, 154, 154, 0.3); }
 
     /* ============================================ */
-    /* LUNA — LINHA ÚNICA DE LUAS                   */
+    /* LUNA — BOTÕES DE LUAS                        */
     /* ============================================ */
     .planets-grid {
       display: flex;
@@ -304,6 +400,7 @@
       user-select: none;
       min-height: 96px;
       min-width: 96px;
+      padding: 0;
     }
     .planet:hover {
       border-color: #90d0ff;
@@ -318,6 +415,11 @@
       border-color: #ffffff;
       box-shadow: 0 0 24px #90d0ff;
       transform: scale(1.08);
+    }
+    .planet.correct-flash {
+      background: radial-gradient(circle at 30% 30%, #a8ffa8, #4ee04e);
+      border-color: #ffffff;
+      box-shadow: 0 0 28px #4ee04e;
     }
     .planet.error {
       background: radial-gradient(circle at 30% 30%, #ff8a8a, #ff4444);
@@ -338,11 +440,7 @@
     /* BOLT e MIMI — LINHAS DE MATCH                */
     /* ============================================ */
     .match-container { margin: 8px 0; }
-    .match-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
+    .match-grid { display: flex; flex-direction: column; gap: 16px; }
     .row {
       display: flex;
       flex-wrap: wrap;
@@ -384,6 +482,16 @@
       box-shadow: 0 0 18px rgba(242, 232, 132, 0.5);
       transform: translateY(-2px);
     }
+    .match-item.correct-flash {
+      background: rgba(126, 232, 126, 0.35);
+      border-color: #4ee04e;
+      box-shadow: 0 0 24px rgba(78, 224, 78, 0.7);
+    }
+    .match-item.error {
+      background: rgba(255, 154, 154, 0.25);
+      border-color: #ff9a9a;
+      animation: shake 0.4s;
+    }
     .match-item.matched {
       opacity: 0.22;
       cursor: default;
@@ -411,6 +519,69 @@
       color: #90d0ff;
       font-weight: 600;
     }
+
+    /* ============================================ */
+    /* MIMI — SELETOR DE NÍVEL (GRADE)              */
+    /* ============================================ */
+    .mimi-level-selector {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+      margin: 16px auto 8px;
+      max-width: 640px;
+    }
+
+    .level-option {
+      padding: 14px 12px;
+      background: rgba(144, 208, 255, 0.08);
+      border: 2px solid rgba(144, 208, 255, 0.3);
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 1rem;
+      color: #e7e9ff;
+      min-height: 64px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .level-option .level-title {
+      font-size: 1.05rem;
+      color: #90d0ff;
+    }
+
+    .level-option .level-range {
+      font-size: 0.8rem;
+      color: #a8c8f0;
+      font-weight: 500;
+    }
+
+    .level-option:hover {
+      border-color: #90d0ff;
+      background: rgba(144, 208, 255, 0.18);
+      transform: translateY(-2px);
+    }
+
+    .level-option:focus-visible {
+      outline: 4px solid #f2e884;
+      outline-offset: 3px;
+    }
+
+    .level-option.selected {
+      border-color: #f2e884;
+      background: rgba(242, 232, 132, 0.18);
+      box-shadow: 0 0 18px rgba(242, 232, 132, 0.45);
+    }
+
+    .level-option.selected .level-title { color: #f2e884; }
+
+    .mimi-game-area { display: none; }
+    .mimi-game-area.active { display: block; }
 
     /* ============================================ */
     /* TIKO — QUEBRA-CABEÇA                         */
@@ -467,6 +638,7 @@
       opacity: 0.55;
       filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
       pointer-events: none;
+      mix-blend-mode: screen; /* suaviza fundo branco sobre azul */
     }
     #pet-luna-float { top: 12%; left: 4%; animation: float-pet-wide-1 14s ease-in-out infinite; }
     #pet-bolt-float { top: 72%; left: 6%; transform: scaleX(-1); animation: float-pet-wide-2 16s ease-in-out infinite; }
@@ -481,26 +653,121 @@
     @keyframes float-pet-wide-5 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(8px,12px); } }
 
     /* ============================================ */
+    /* VITÓRIA — PAINEL                              */
+    /* ============================================ */
+    .victory-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 2, 20, 0.95);
+      backdrop-filter: blur(8px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 200;
+      padding: 24px;
+    }
+    .victory-overlay.active { display: flex; }
+
+    .victory-panel {
+      background: linear-gradient(160deg, #1a1a5a 0%, #0a0a3a 100%);
+      padding: 40px 32px 32px;
+      border-radius: 26px;
+      width: 100%;
+      max-width: 460px;
+      text-align: center;
+      position: relative;
+      border: 3px solid #f2e884;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(242, 232, 132, 0.3);
+      overflow: hidden;
+      animation: victory-appear 0.5s ease;
+    }
+    @keyframes victory-appear {
+      0% { transform: scale(0.7); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .victory-pet {
+      width: 140px;
+      height: auto;
+      margin: 0 auto 8px;
+      display: block;
+      filter: drop-shadow(0 0 20px rgba(242, 232, 132, 0.6));
+      animation: victory-bounce 1.2s ease-in-out infinite;
+      mix-blend-mode: screen;
+    }
+    @keyframes victory-bounce {
+      0%, 100% { transform: translateY(0) rotate(-2deg); }
+      50% { transform: translateY(-12px) rotate(2deg); }
+    }
+
+    /* Estrelas em CSS no fundo do painel */
+    .victory-stars {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+    .victory-stars span {
+      position: absolute;
+      font-size: 1.2rem;
+      opacity: 0;
+      animation: star-burst 2.4s ease-out infinite;
+    }
+    .victory-stars span:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+    .victory-stars span:nth-child(2) { top: 20%; right: 15%; animation-delay: 0.3s; }
+    .victory-stars span:nth-child(3) { bottom: 25%; left: 18%; animation-delay: 0.6s; }
+    .victory-stars span:nth-child(4) { bottom: 15%; right: 12%; animation-delay: 0.9s; }
+    .victory-stars span:nth-child(5) { top: 45%; left: 5%; animation-delay: 1.2s; }
+    .victory-stars span:nth-child(6) { top: 40%; right: 6%; animation-delay: 1.5s; }
+    @keyframes star-burst {
+      0% { opacity: 0; transform: scale(0) rotate(0); }
+      20% { opacity: 1; transform: scale(1.2) rotate(45deg); }
+      60% { opacity: 1; transform: scale(1) rotate(90deg); }
+      100% { opacity: 0; transform: scale(0.5) rotate(180deg); }
+    }
+
+    .victory-title {
+      position: relative;
+      z-index: 1;
+      font-size: 1.8rem;
+      color: #f2e884;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-shadow: 0 0 16px rgba(242, 232, 132, 0.6);
+    }
+    .victory-message {
+      position: relative;
+      z-index: 1;
+      font-size: 1.05rem;
+      color: #c5cfeb;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+    .victory-buttons {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* ============================================ */
     /* RESPONSIVO                                   */
     /* ============================================ */
     @media (max-width: 1080px) {
-      .mission-grid {
-        flex-wrap: wrap;
-        max-width: 720px;
-      }
-      .mission-square {
-        flex: 1 1 calc(50% - 24px);
-        max-width: none;
-      }
+      .mission-grid { flex-wrap: wrap; max-width: 720px; }
+      .mission-square { flex: 1 1 calc(50% - 24px); max-width: none; }
     }
 
     @media (max-width: 560px) {
-      .page-header { padding: 28px 16px 20px; }
+      .page-header { padding: 20px 16px 16px; }
+      .header-top { margin-bottom: 12px; }
       .mission-grid { gap: 16px; padding: 0 16px 40px; }
       .mission-square {
         flex: 1 1 100%;
-        aspect-ratio: auto;
-        min-height: 150px;
+        min-height: 200px;
         padding: 18px 14px;
       }
       .modal-content { padding: 28px 18px 24px; }
@@ -510,15 +777,19 @@
       .floating-pet { width: 70px; opacity: 0.4; }
       .match-item { min-width: 66px; padding: 12px 14px; font-size: 0.9rem; }
       .color-block-item { min-width: 66px; height: 48px; }
+      .mimi-level-selector { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .level-option { min-height: 58px; padding: 10px 8px; }
+      .victory-panel { padding: 30px 20px 24px; }
+      .victory-pet { width: 100px; }
+      .victory-title { font-size: 1.4rem; }
     }
 
-    /* ============================================ */
-    /* ACESSIBILIDADE: REDUÇÃO DE MOVIMENTO         */
-    /* ============================================ */
     @media (prefers-reduced-motion: reduce) {
       .floating-pet { animation: none !important; }
       .planet.highlight { transform: none; }
       .mission-square { transition: none; }
+      .victory-pet { animation: none !important; }
+      .victory-stars span { animation: none !important; opacity: 0.3; }
       * { scroll-behavior: auto !important; }
     }
   </style>
@@ -533,6 +804,10 @@
   <img src="pet-extra.png" alt="" class="floating-pet" id="pet-placeholder-float">
 
   <header class="page-header">
+    <div class="header-top">
+      <a href="index.html" class="btn-inicio" aria-label="Voltar ao início">← Início</a>
+      <div class="progress-info" id="progress-info" aria-live="polite">⭐ 0 de 4</div>
+    </div>
     <h1 class="page-title">Escolha sua Missão</h1>
     <div class="page-subtitle">AstroPets</div>
   </header>
@@ -540,6 +815,7 @@
   <div class="mission-grid">
 
     <div class="mission-square" id="mission-luna" tabindex="0" role="button" onclick="openGame('luna')" onkeydown="if(event.key==='Enter'||event.key===' ')openGame('luna')">
+      <span class="mission-star" aria-hidden="true">⭐</span>
       <div class="mission-emoji">🧠</div>
       <div class="pet-name">Luna</div>
       <div class="mission-name">Memória Cósmica</div>
@@ -547,6 +823,7 @@
     </div>
 
     <div class="mission-square" id="mission-bolt" tabindex="0" role="button" onclick="openGame('bolt')" onkeydown="if(event.key==='Enter'||event.key===' ')openGame('bolt')">
+      <span class="mission-star" aria-hidden="true">⭐</span>
       <div class="mission-emoji">🌈</div>
       <div class="pet-name">Bolt</div>
       <div class="mission-name">Assimilar as Cores</div>
@@ -554,6 +831,7 @@
     </div>
 
     <div class="mission-square" id="mission-mimi" tabindex="0" role="button" onclick="openGame('mimi')" onkeydown="if(event.key==='Enter'||event.key===' ')openGame('mimi')">
+      <span class="mission-star" aria-hidden="true">⭐</span>
       <div class="mission-emoji">🔢</div>
       <div class="pet-name">Mimi</div>
       <div class="mission-name">Match Numérico Astral</div>
@@ -561,6 +839,7 @@
     </div>
 
     <div class="mission-square" id="mission-tiko" tabindex="0" role="button" onclick="openGame('tiko')" onkeydown="if(event.key==='Enter'||event.key===' ')openGame('tiko')">
+      <span class="mission-star" aria-hidden="true">⭐</span>
       <div class="mission-emoji">🧩</div>
       <div class="pet-name">Tiko</div>
       <div class="mission-name">Quebra-cabeça Astral</div>
@@ -573,8 +852,8 @@
   <div id="lunaGameModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="luna-title">
     <div class="modal-content">
       <button class="close-button" onclick="closeGame('luna')" aria-label="Fechar missão da Luna">&times;</button>
-      <h2 id="luna-title">Missão: Memória Cósmica da Luna</h2>
-      <p>Observe a sequência de luzes e clique nas luas na ordem correta.</p>
+      <h2 id="luna-title" tabindex="-1">Missão: Memória Cósmica da Luna</h2>
+      <p>Observe a sequência e repita na mesma ordem.</p>
 
       <div class="planets-grid" id="planets-grid">
         <button class="planet" id="p1" aria-label="Lua">🌙</button>
@@ -584,7 +863,7 @@
       </div>
 
       <div id="feedback-memoria" class="game-feedback" aria-live="polite" aria-atomic="true">Clique em "Começar" para ver a sequência.</div>
-      
+
       <div id="luna-controls">
         <button class="game-action-button" id="btn-luna-start" onclick="iniciarMemoria()">Começar</button>
       </div>
@@ -595,17 +874,14 @@
   <div id="boltGameModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="bolt-title">
     <div class="modal-content">
       <button class="close-button" onclick="closeGame('bolt')" aria-label="Fechar missão do Bolt">&times;</button>
-      <h2 id="bolt-title">Missão: Assimilar as Cores do Bolt</h2>
-
+      <h2 id="bolt-title" tabindex="-1">Missão: Assimilar as Cores do Bolt</h2>
       <div class="game-feedback" id="bolt-feedback" aria-live="polite" aria-atomic="true">Clique no nome da cor e depois no bloco colorido correspondente.</div>
-
       <div class="match-container">
         <div class="match-grid" id="bolt-match-grid">
           <div class="row" id="color-name-row"></div>
           <div class="row" id="color-block-row"></div>
         </div>
       </div>
-
       <div id="bolt-game-controls">
         <button class="game-action-button" onclick="startBoltGame()">Iniciar Jogo</button>
       </div>
@@ -616,23 +892,35 @@
   <div id="mimiGameModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="mimi-title">
     <div class="modal-content">
       <button class="close-button" onclick="closeGame('mimi')" aria-label="Fechar missão da Mimi">&times;</button>
-      <h2 id="mimi-title">Missão: Match Numérico Astral</h2>
+      <h2 id="mimi-title" tabindex="-1">Missão: Match Numérico Astral</h2>
 
-      <div class="game-feedback" id="mimi-feedback" aria-live="polite" aria-atomic="true">Clique no número por extenso e depois no numeral correto.</div>
+      <div id="mimi-level-step">
+        <p>Escolha o nível que você quer jogar:</p>
+        <div class="mimi-level-selector" id="mimi-level-selector" role="radiogroup" aria-label="Escolha o nível"></div>
+      </div>
 
-      <div class="match-container">
-        <div class="match-grid" id="match-grid">
-          <div class="row" id="extenso-row"></div>
-          <div class="row" id="numeral-row"></div>
+      <div id="mimi-game-step" class="mimi-game-area">
+        <div class="game-feedback" id="mimi-feedback" aria-live="polite" aria-atomic="true">
+          Clique no número por extenso e depois no numeral correto.
         </div>
-      </div>
 
-      <div id="mimi-game-info">
-        Nível: <span id="mimi-level">1 (1-10)</span>
-      </div>
+        <div class="match-container">
+          <div class="match-grid" id="match-grid">
+            <div class="row" id="extenso-row"></div>
+            <div class="row" id="numeral-row"></div>
+          </div>
+        </div>
 
-      <div id="mimi-game-controls">
-        <button class="game-action-button" onclick="startMimiGame()">Iniciar Nível</button>
+        <div id="mimi-game-info">
+          Nível: <span id="mimi-level">1 (1-10)</span>
+        </div>
+
+        <div id="mimi-game-controls" style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+          <button class="game-action-button" id="btn-mimi-main" onclick="startMimiGame()">Iniciar Nível</button>
+          <button class="game-action-button" onclick="voltarEscolherNivelMimi()" style="background:transparent; color:#a8c8f0; border:2px solid #a8c8f0; box-shadow:none;">
+            Trocar Nível
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -641,27 +929,166 @@
   <div id="tikoGameModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="tiko-title">
     <div class="modal-content">
       <button class="close-button" onclick="closeGame('tiko')" aria-label="Fechar missão do Tiko">&times;</button>
-      <h2 id="tiko-title">Missão: Quebra-cabeça Astral do Tiko</h2>
-
+      <h2 id="tiko-title" tabindex="-1">Missão: Quebra-cabeça Astral do Tiko</h2>
       <div class="game-feedback" id="tiko-feedback" aria-live="polite" aria-atomic="true">Reorganize as peças para formar a imagem completa.</div>
-
       <div class="puzzle-wrapper">
         <div class="puzzle-grid" id="tiko-puzzle-grid"></div>
       </div>
-
       <div id="tiko-game-controls">
         <button class="game-action-button" onclick="startTikoGame()">Iniciar Quebra-cabeça</button>
       </div>
     </div>
   </div>
 
+  <!-- VITÓRIA (painel único, conteúdo dinâmico) -->
+  <div id="victoryOverlay" class="victory-overlay" role="dialog" aria-modal="true" aria-labelledby="victory-title">
+    <div class="victory-panel">
+      <div class="victory-stars" aria-hidden="true">
+        <span>⭐</span><span>✨</span><span>⭐</span><span>✨</span><span>⭐</span><span>✨</span>
+      </div>
+      <img id="victory-pet-img" class="victory-pet" src="luna.png" alt="">
+      <h2 id="victory-title" class="victory-title" tabindex="-1">Parabéns!</h2>
+      <p id="victory-message" class="victory-message">Você completou a missão!</p>
+      <div class="victory-buttons">
+        <button class="game-action-button" id="btn-victory-again">Jogar de novo</button>
+        <button class="game-action-button" id="btn-victory-other" style="background:transparent; color:#90d0ff; border:2px solid #90d0ff; box-shadow:none;">Outra missão</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    /* ============================================ */
+    /* PROGRESSO — localStorage com try/catch       */
+    /* ============================================ */
+    const STORAGE_KEY = 'astropets_progress_v1';
+
+    function carregarProgresso() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return { luna: false, bolt: false, mimi: false, tiko: false, mimiLevel: 1 };
+        const data = JSON.parse(raw);
+        return {
+          luna: !!data.luna,
+          bolt: !!data.bolt,
+          mimi: !!data.mimi,
+          tiko: !!data.tiko,
+          mimiLevel: typeof data.mimiLevel === 'number' ? data.mimiLevel : 1
+        };
+      } catch (e) {
+        return { luna: false, bolt: false, mimi: false, tiko: false, mimiLevel: 1 };
+      }
+    }
+
+    function salvarProgresso(p) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+      } catch (e) { /* ignora se bloqueado */ }
+    }
+
+    let progresso = carregarProgresso();
+
+    function marcarMissaoConcluida(petId) {
+      if (progresso[petId]) return;
+      progresso[petId] = true;
+      salvarProgresso(progresso);
+      atualizarUIProgresso();
+    }
+
+    function atualizarUIProgresso() {
+      const pets = ['luna', 'bolt', 'mimi', 'tiko'];
+      let feitas = 0;
+      pets.forEach(p => {
+        const card = document.getElementById('mission-' + p);
+        if (card) {
+          card.classList.toggle('completed', !!progresso[p]);
+          if (progresso[p]) feitas++;
+        }
+      });
+      const info = document.getElementById('progress-info');
+      if (info) info.textContent = `⭐ ${feitas} de 4`;
+    }
+
+    /* ============================================ */
+    /* SONS E VIBRAÇÃO                              */
+    /* ============================================ */
+    let audioCtx = null;
+    let somAcertoBuffer = null;
+    let somErroBuffer = null;
+    let audioIniciado = false;
+
+    function iniciarAudio() {
+      if (audioIniciado) return;
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        audioIniciado = true;
+        // Tenta carregar os arquivos; se falhar, usa beeps sintetizados
+        fetch('sons/acerto.mp3').then(r => r.arrayBuffer()).then(b => audioCtx.decodeAudioData(b)).then(buf => { somAcertoBuffer = buf; }).catch(() => {});
+        fetch('sons/erro.mp3').then(r => r.arrayBuffer()).then(b => audioCtx.decodeAudioData(b)).then(buf => { somErroBuffer = buf; }).catch(() => {});
+      } catch (e) { /* sem áudio */ }
+    }
+
+    // Desbloqueia áudio no primeiro toque
+    document.addEventListener('pointerdown', iniciarAudio, { once: true });
+
+    function beep(freq, dur) {
+      if (!audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.value = freq;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + dur);
+      } catch (e) { /* ignora */ }
+    }
+
+    function tocarAcerto() {
+      if (somAcertoBuffer && audioCtx) {
+        try {
+          const src = audioCtx.createBufferSource();
+          src.buffer = somAcertoBuffer;
+          src.connect(audioCtx.destination);
+          src.start();
+          return;
+        } catch (e) {}
+      }
+      beep(880, 0.12); // fallback
+    }
+
+    function tocarErro() {
+      if (somErroBuffer && audioCtx) {
+        try {
+          const src = audioCtx.createBufferSource();
+          src.buffer = somErroBuffer;
+          src.connect(audioCtx.destination);
+          src.start();
+          return;
+        } catch (e) {}
+      }
+      beep(220, 0.2); // fallback
+    }
+
+    function vibrarAcerto() {
+      if (navigator.vibrate) navigator.vibrate(40);
+    }
+    function vibrarErro() {
+      if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+    }
+
     /* ============================================ */
     /* UTILITÁRIOS                                  */
     /* ============================================ */
     function delay(ms) {
       return new Promise(resolve => setTimeout(resolve, ms));
     }
+
+    /* ============================================ */
+    /* CONTROLE DE MODAIS COM FOCO E ESC            */
+    /* ============================================ */
+    let lastFocusedElement = null;
 
     function openGame(petId) {
       const map = {
@@ -671,7 +1098,21 @@
         tiko: ['tikoGameModal', resetTikoGame]
       };
       const [modalId, reset] = map[petId];
-      document.getElementById(modalId).classList.add('active');
+      lastFocusedElement = document.activeElement;
+
+      // Inicia áudio na primeira interação
+      iniciarAudio();
+
+      const modal = document.getElementById(modalId);
+      modal.classList.add('active');
+      document.body.classList.add('modal-open');
+
+      // Leva o foco para o título
+      setTimeout(() => {
+        const title = modal.querySelector('h2');
+        if (title) title.focus();
+      }, 50);
+
       reset();
     }
 
@@ -684,27 +1125,129 @@
       };
       const [modalId, reset] = map[petId];
       document.getElementById(modalId).classList.remove('active');
+      document.body.classList.remove('modal-open');
       reset();
+
+      // Devolve o foco
+      if (lastFocusedElement && lastFocusedElement.focus) {
+        lastFocusedElement.focus();
+      }
+      lastFocusedElement = null;
     }
 
+    // Fecha modal com Esc ou clique fora
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const modais = ['lunaGameModal', 'boltGameModal', 'mimiGameModal', 'tikoGameModal'];
+        for (const id of modais) {
+          const m = document.getElementById(id);
+          if (m && m.classList.contains('active')) {
+            const petId = id.replace('GameModal', '');
+            closeGame(petId);
+            return;
+          }
+        }
+        // Fecha vitória
+        const victory = document.getElementById('victoryOverlay');
+        if (victory && victory.classList.contains('active')) {
+          fecharVitoria();
+        }
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      // Clique no fundo do modal
+      if (e.target.classList && e.target.classList.contains('modal-overlay') && e.target.classList.contains('active')) {
+        const petId = e.target.id.replace('GameModal', '');
+        closeGame(petId);
+      }
+      // Clique no fundo da vitória
+      if (e.target.id === 'victoryOverlay' && e.target.classList.contains('active')) {
+        fecharVitoria();
+      }
+    });
+
     /* ============================================ */
-    /* LUNA (JOGO DA MEMÓRIA CORRIGIDO)             */
+    /* VITÓRIA                                      */
+    /* ============================================ */
+    let victoryContext = null; // { petId, restartFn }
+
+    function mostrarVitoria(petId, opcoes) {
+      victoryContext = { petId, restartFn: opcoes.restartFn };
+      marcarMissaoConcluida(petId);
+
+      const overlay = document.getElementById('victoryOverlay');
+      const petImg = document.getElementById('victory-pet-img');
+      const title = document.getElementById('victory-title');
+      const msg = document.getElementById('victory-message');
+
+      const petsImgs = {
+        luna: 'luna.png',
+        bolt: 'Bolt.png',
+        mimi: 'mimi.png',
+        tiko: 'tiko.png'
+      };
+      const nomes = { luna: 'Luna', bolt: 'Bolt', mimi: 'Mimi', tiko: 'Tiko' };
+
+      petImg.src = petsImgs[petId] || 'luna.png';
+      petImg.alt = nomes[petId] || '';
+      title.textContent = `Parabéns, ${nomes[petId] || 'AstroPet'}!`;
+      msg.textContent = opcoes.mensagem || 'Você completou a missão!';
+
+      overlay.classList.add('active');
+      document.body.classList.add('modal-open');
+
+      setTimeout(() => title.focus(), 50);
+    }
+
+    function fecharVitoria() {
+      const overlay = document.getElementById('victoryOverlay');
+      overlay.classList.remove('active');
+      document.body.classList.remove('modal-open');
+      victoryContext = null;
+    }
+
+    document.getElementById('btn-victory-again').addEventListener('click', () => {
+      const ctx = victoryContext;
+      fecharVitoria();
+      if (ctx && ctx.restartFn) {
+        setTimeout(() => ctx.restartFn(), 100);
+      }
+    });
+
+    document.getElementById('btn-victory-other').addEventListener('click', () => {
+      const ctx = victoryContext;
+      fecharVitoria();
+      if (ctx) {
+        const petId = ctx.petId;
+        // Fecha o modal do jogo atual
+        document.getElementById(petId + 'GameModal').classList.remove('active');
+        document.body.classList.remove('modal-open');
+        // Reseta
+        const map = {
+          luna: resetLunaGame, bolt: resetBoltGame,
+          mimi: resetMimiGame, tiko: resetTikoGame
+        };
+        map[petId]();
+      }
+    });
+
+    /* ============================================ */
+    /* LUNA — SIMON SAYS                            */
     /* ============================================ */
     const planetElements = document.querySelectorAll('#planets-grid .planet');
     const feedbackMemoria = document.getElementById('feedback-memoria');
     const btnLunaStart = document.getElementById('btn-luna-start');
-    
+
     let sequence = [];
-    let playerSequence = [];
+    let playerIndex = 0;
     let isPlayerTurn = false;
     let isShowingSequence = false;
     let gameActive = false;
 
-    const PLANET_EMOJI = { p1: '🌙', p2: '💕', p3: '😍', p4: '😜' };
-
     function resetLunaGame() {
       sequence = [];
-      playerSequence = [];
+      playerIndex = 0;
       isPlayerTurn = false;
       isShowingSequence = false;
       gameActive = false;
@@ -712,23 +1255,22 @@
       feedbackMemoria.className = 'game-feedback';
       btnLunaStart.textContent = 'Começar';
       btnLunaStart.disabled = false;
-      planetElements.forEach(p => p.classList.remove('error', 'highlight', 'turn-active'));
+      planetElements.forEach(p => p.classList.remove('error', 'highlight', 'turn-active', 'correct-flash'));
     }
 
-    async function tocarSequencia() {
+    async function piscarSequenciaInteira() {
       isShowingSequence = true;
       isPlayerTurn = false;
-      feedbackMemoria.textContent = `👀 Observe com atenção... (${sequence.length} ${sequence.length === 1 ? 'passo' : 'passos'})`;
-      feedbackMemoria.className = 'game-feedback observing';
+      planetElements.forEach(p => p.classList.remove('turn-active'));
 
-      await delay(600);
+      await delay(500);
 
       for (let i = 0; i < sequence.length; i++) {
         const planet = document.getElementById(sequence[i]);
         planet.classList.add('highlight');
-        await delay(700);
+        await delay(550);
         planet.classList.remove('highlight');
-        await delay(400);
+        await delay(250);
       }
 
       isShowingSequence = false;
@@ -740,64 +1282,72 @@
 
     async function iniciarMemoria() {
       if (isShowingSequence || isPlayerTurn) return;
-      
+
       if (!gameActive) {
         gameActive = true;
         sequence = [];
-        btnLunaStart.textContent = 'Próximo Nível';
-        btnLunaStart.disabled = true;
       }
-
-      playerSequence = [];
-      feedbackMemoria.textContent = 'Preparando...';
-      feedbackMemoria.className = 'game-feedback';
-      await delay(500);
 
       const idx = Math.floor(Math.random() * 4);
       sequence.push(planetElements[idx].id);
-      
-      await tocarSequencia();
+
+      playerIndex = 0;
+      btnLunaStart.disabled = true;
+
+      feedbackMemoria.textContent = `👀 Observe com atenção... (${sequence.length} ${sequence.length === 1 ? 'passo' : 'passos'})`;
+      feedbackMemoria.className = 'game-feedback observing';
+
+      await piscarSequenciaInteira();
     }
 
     planetElements.forEach(planet => {
       planet.addEventListener('click', async (e) => {
         if (!isPlayerTurn) return;
         const clickedId = e.currentTarget.id;
-        playerSequence.push(clickedId);
 
-        e.currentTarget.classList.add('highlight');
-        setTimeout(() => e.currentTarget.classList.remove('highlight'), 250);
+        if (clickedId === sequence[playerIndex]) {
+          // ACERTO
+          e.currentTarget.classList.add('correct-flash');
+          tocarAcerto();
+          vibrarAcerto();
+          setTimeout(() => e.currentTarget.classList.remove('correct-flash'), 400);
 
-        const currentStep = playerSequence.length - 1;
+          playerIndex++;
 
-        if (clickedId !== sequence[currentStep]) {
+          if (playerIndex === sequence.length) {
+            isPlayerTurn = false;
+            planetElements.forEach(p => p.classList.remove('turn-active'));
+            feedbackMemoria.textContent = `✅ Muito bem! Você completou ${sequence.length} ${sequence.length === 1 ? 'passo' : 'passos'}!`;
+            feedbackMemoria.className = 'game-feedback success';
+
+            // Vitória: primeiro nível concluído
+            setTimeout(() => {
+              mostrarVitoria('luna', {
+                mensagem: `Você completou ${sequence.length} ${sequence.length === 1 ? 'passo' : 'passos'} da sequência cósmica!`,
+                restartFn: () => {
+                  document.getElementById('lunaGameModal').classList.add('active');
+                  resetLunaGame();
+                  iniciarMemoria();
+                }
+              });
+            }, 600);
+          }
+        } else {
+          // ERRO
           isPlayerTurn = false;
           planetElements.forEach(p => p.classList.remove('turn-active'));
           e.currentTarget.classList.add('error');
-          
-          const sequenciaCorreta = sequence.map(id => PLANET_EMOJI[id]).join(' → ');
-          feedbackMemoria.textContent = `❌ Quase! A sequência correta era: ${sequenciaCorreta}. Clique em "Tentar Novamente" para recomeçar.`;
-          feedbackMemoria.className = 'game-feedback error';
-          
-          setTimeout(() => e.currentTarget.classList.remove('error'), 1000);
-          
-          sequence = [];
-          playerSequence = [];
-          gameActive = false;
-          btnLunaStart.textContent = 'Tentar Novamente';
-          btnLunaStart.disabled = false;
-          return;
-        }
+          tocarErro();
+          vibrarErro();
+          setTimeout(() => e.currentTarget.classList.remove('error'), 800);
 
-        if (playerSequence.length === sequence.length) {
-          isPlayerTurn = false;
-          planetElements.forEach(p => p.classList.remove('turn-active'));
-          feedbackMemoria.textContent = `✅ Muito bem! Você completou ${sequence.length} ${sequence.length === 1 ? 'passo' : 'passos'}!`;
-          feedbackMemoria.className = 'game-feedback success';
-          playerSequence = [];
-          
+          feedbackMemoria.textContent =
+            `❌ Quase! Você acertou ${playerIndex} de ${sequence.length}. Clique em "Tentar Novamente" para ver a mesma sequência.`;
+          feedbackMemoria.className = 'game-feedback error';
+
+          playerIndex = 0;
           btnLunaStart.disabled = false;
-          btnLunaStart.textContent = 'Próximo Nível';
+          btnLunaStart.textContent = 'Tentar Novamente';
         }
       });
     });
@@ -873,6 +1423,17 @@
       if (boltMatchesCompleted === COLORS_MAP.length) {
         boltFeedback.textContent = '🎉 Parabéns! Todas as cores foram assimiladas!';
         boltFeedback.className = 'game-feedback success';
+
+        setTimeout(() => {
+          mostrarVitoria('bolt', {
+            mensagem: 'Você combinou todas as cores do Bolt!',
+            restartFn: () => {
+              document.getElementById('boltGameModal').classList.add('active');
+              resetBoltGame();
+              startBoltGame();
+            }
+          });
+        }, 500);
       }
     }
 
@@ -911,19 +1472,41 @@
       }
 
       if (value === boltSelectedElement.dataset.value) {
+        // ACERTO
+        tocarAcerto();
+        vibrarAcerto();
+        el.classList.add('correct-flash');
+        boltSelectedElement.classList.add('correct-flash');
+
+        setTimeout(() => {
+          el.classList.remove('correct-flash');
+          if (boltSelectedElement) boltSelectedElement.classList.remove('correct-flash');
+          el.classList.add('matched');
+          if (boltSelectedElement) boltSelectedElement.classList.add('matched');
+          if (boltSelectedElement) boltSelectedElement.classList.remove('selected');
+          boltSelectedElement = null;
+          boltTypeSelected = null;
+        }, 400);
+
         boltFeedback.textContent = `✅ Acerto! ${value} combinado.`;
         boltFeedback.className = 'game-feedback success';
-        el.classList.add('matched');
-        boltSelectedElement.classList.add('matched');
-        boltSelectedElement.classList.remove('selected');
-        boltSelectedElement = null;
-        boltTypeSelected = null;
+
         boltMatchesCompleted++;
         checkBoltWin();
       } else {
+        // ERRO
+        tocarErro();
+        vibrarErro();
+        el.classList.add('error');
+        if (boltSelectedElement) boltSelectedElement.classList.add('error');
+        setTimeout(() => {
+          el.classList.remove('error');
+          if (boltSelectedElement) boltSelectedElement.classList.remove('error');
+        }, 600);
+
         boltFeedback.textContent = `❌ Erro! Não é a cor de ${boltSelectedElement.dataset.value}.`;
         boltFeedback.className = 'game-feedback error';
-        boltSelectedElement.classList.remove('selected');
+        if (boltSelectedElement) boltSelectedElement.classList.remove('selected');
         boltSelectedElement = null;
         boltTypeSelected = null;
         setTimeout(() => {
@@ -934,13 +1517,32 @@
     }
 
     /* ============================================ */
-    /* MIMI                                         */
+    /* MIMI — NÍVEIS 1-10 até 91-100                */
     /* ============================================ */
     const extensoRow = document.getElementById('extenso-row');
     const numeralRow = document.getElementById('numeral-row');
     const mimiFeedback = document.getElementById('mimi-feedback');
     const mimiLevelDisplay = document.getElementById('mimi-level');
-    let mimiCurrentLevel = 1;
+    const mimiLevelStep = document.getElementById('mimi-level-step');
+    const mimiGameStep = document.getElementById('mimi-game-step');
+    const mimiLevelSelector = document.getElementById('mimi-level-selector');
+    const btnMimiMain = document.getElementById('btn-mimi-main');
+
+    const MIMI_LEVELS = [
+      { id: 1,  start: 1,  end: 10,  label: 'Nível 1',  range: '1 a 10' },
+      { id: 2,  start: 11, end: 20,  label: 'Nível 2',  range: '11 a 20' },
+      { id: 3,  start: 21, end: 30,  label: 'Nível 3',  range: '21 a 30' },
+      { id: 4,  start: 31, end: 40,  label: 'Nível 4',  range: '31 a 40' },
+      { id: 5,  start: 41, end: 50,  label: 'Nível 5',  range: '41 a 50' },
+      { id: 6,  start: 51, end: 60,  label: 'Nível 6',  range: '51 a 60' },
+      { id: 7,  start: 61, end: 70,  label: 'Nível 7',  range: '61 a 70' },
+      { id: 8,  start: 71, end: 80,  label: 'Nível 8',  range: '71 a 80' },
+      { id: 9,  start: 81, end: 90,  label: 'Nível 9',  range: '81 a 90' },
+      { id: 10, start: 91, end: 100, label: 'Nível 10', range: '91 a 100' }
+    ];
+
+    let mimiCurrentLevel = progresso.mimiLevel || 1;
+    let mimiPairsToMatch = 10;
     let mimiMatchesCompleted = 0;
     let mimiSelectedElement = null;
     let mimiTypeSelected = null;
@@ -949,15 +1551,83 @@
       1: "UM", 2: "DOIS", 3: "TRÊS", 4: "QUATRO", 5: "CINCO",
       6: "SEIS", 7: "SETE", 8: "OITO", 9: "NOVE", 10: "DEZ",
       11: "ONZE", 12: "DOZE", 13: "TREZE", 14: "QUATORZE", 15: "QUINZE",
-      16: "DEZESSEIS", 17: "DEZESSETE", 18: "DEZOITO", 19: "DEZENOVE", 20: "VINTE"
+      16: "DEZESSEIS", 17: "DEZESSETE", 18: "DEZOITO", 19: "DEZENOVE", 20: "VINTE",
+      21: "VINTE E UM", 22: "VINTE E DOIS", 23: "VINTE E TRÊS", 24: "VINTE E QUATRO", 25: "VINTE E CINCO",
+      26: "VINTE E SEIS", 27: "VINTE E SETE", 28: "VINTE E OITO", 29: "VINTE E NOVE", 30: "TRINTA",
+      31: "TRINTA E UM", 32: "TRINTA E DOIS", 33: "TRINTA E TRÊS", 34: "TRINTA E QUATRO", 35: "TRINTA E CINCO",
+      36: "TRINTA E SEIS", 37: "TRINTA E SETE", 38: "TRINTA E OITO", 39: "TRINTA E NOVE", 40: "QUARENTA",
+      41: "QUARENTA E UM", 42: "QUARENTA E DOIS", 43: "QUARENTA E TRÊS", 44: "QUARENTA E QUATRO", 45: "QUARENTA E CINCO",
+      46: "QUARENTA E SEIS", 47: "QUARENTA E SETE", 48: "QUARENTA E OITO", 49: "QUARENTA E NOVE", 50: "CINQUENTA",
+      51: "CINQUENTA E UM", 52: "CINQUENTA E DOIS", 53: "CINQUENTA E TRÊS", 54: "CINQUENTA E QUATRO", 55: "CINQUENTA E CINCO",
+      56: "CINQUENTA E SEIS", 57: "CINQUENTA E SETE", 58: "CINQUENTA E OITO", 59: "CINQUENTA E NOVE", 60: "SESSENTA",
+      61: "SESSENTA E UM", 62: "SESSENTA E DOIS", 63: "SESSENTA E TRÊS", 64: "SESSENTA E QUATRO", 65: "SESSENTA E CINCO",
+      66: "SESSENTA E SEIS", 67: "SESSENTA E SETE", 68: "SESSENTA E OITO", 69: "SESSENTA E NOVE", 70: "SETENTA",
+      71: "SETENTA E UM", 72: "SETENTA E DOIS", 73: "SETENTA E TRÊS", 74: "SETENTA E QUATRO", 75: "SETENTA E CINCO",
+      76: "SETENTA E SEIS", 77: "SETENTA E SETE", 78: "SETENTA E OITO", 79: "SETENTA E NOVE", 80: "OITENTA",
+      81: "OITENTA E UM", 82: "OITENTA E DOIS", 83: "OITENTA E TRÊS", 84: "OITENTA E QUATRO", 85: "OITENTA E CINCO",
+      86: "OITENTA E SEIS", 87: "OITENTA E SETE", 88: "OITENTA E OITO", 89: "OITENTA E NOVE", 90: "NOVENTA",
+      91: "NOVENTA E UM", 92: "NOVENTA E DOIS", 93: "NOVENTA E TRÊS", 94: "NOVENTA E QUATRO", 95: "NOVENTA E CINCO",
+      96: "NOVENTA E SEIS", 97: "NOVENTA E SETE", 98: "NOVENTA E OITO", 99: "NOVENTA E NOVE", 100: "CEM"
     };
 
-    function generateMimiGame() {
-      const start = mimiCurrentLevel === 1 ? 1 : 11;
-      const end = mimiCurrentLevel === 1 ? 10 : 20;
-      const rangeText = mimiCurrentLevel === 1 ? '(1-10)' : '(11-20)';
+    function construirSeletorNiveis() {
+      mimiLevelSelector.innerHTML = '';
+      MIMI_LEVELS.forEach(lv => {
+        const btn = document.createElement('button');
+        btn.className = 'level-option';
+        btn.dataset.level = lv.id;
+        btn.setAttribute('role', 'radio');
+        btn.setAttribute('aria-checked', 'false');
+        btn.innerHTML = `
+          <span class="level-title">${lv.label}</span>
+          <span class="level-range">Números ${lv.range}</span>
+        `;
+        btn.addEventListener('click', () => escolherNivelMimi(lv.id));
+        mimiLevelSelector.appendChild(btn);
+      });
+    }
 
-      mimiLevelDisplay.textContent = `${mimiCurrentLevel} ${rangeText}`;
+    function getMimiLevelData(id) {
+      return MIMI_LEVELS.find(lv => lv.id === id) || MIMI_LEVELS[0];
+    }
+
+    function mostrarEscolhaNivelMimi() {
+      mimiLevelStep.style.display = 'block';
+      mimiGameStep.classList.remove('active');
+      document.querySelectorAll('.level-option').forEach(btn => {
+        btn.classList.remove('selected');
+        btn.setAttribute('aria-checked', 'false');
+      });
+    }
+
+    function escolherNivelMimi(levelId) {
+      mimiCurrentLevel = levelId;
+      progresso.mimiLevel = levelId;
+      salvarProgresso(progresso);
+
+      document.querySelectorAll('.level-option').forEach(btn => {
+        const isThis = parseInt(btn.dataset.level) === levelId;
+        btn.classList.toggle('selected', isThis);
+        btn.setAttribute('aria-checked', isThis ? 'true' : 'false');
+      });
+      mimiLevelStep.style.display = 'none';
+      mimiGameStep.classList.add('active');
+      generateMimiGame();
+      btnMimiMain.textContent = 'Reiniciar Nível';
+      btnMimiMain.onclick = startMimiGame;
+    }
+
+    function voltarEscolherNivelMimi() {
+      mostrarEscolhaNivelMimi();
+    }
+
+    function generateMimiGame() {
+      const level = getMimiLevelData(mimiCurrentLevel);
+      const { start, end, range } = level;
+      const pairs = end - start + 1;
+      mimiPairsToMatch = pairs;
+
+      mimiLevelDisplay.textContent = `${level.label} (${range})`;
       mimiMatchesCompleted = 0;
       extensoRow.innerHTML = '';
       numeralRow.innerHTML = '';
@@ -994,30 +1664,50 @@
 
     function startMimiGame() {
       generateMimiGame();
-      document.querySelector('#mimi-game-controls button').textContent = 'Reiniciar Nível';
+      btnMimiMain.textContent = 'Reiniciar Nível';
+      btnMimiMain.onclick = startMimiGame;
     }
 
     function resetMimiGame() {
-      mimiCurrentLevel = 1;
-      generateMimiGame();
-      mimiFeedback.textContent = "Clique em 'Iniciar Nível' para começar.";
-      mimiFeedback.className = 'game-feedback';
-      document.querySelector('#mimi-game-controls button').textContent = 'Iniciar Nível';
+      mimiMatchesCompleted = 0;
+      mimiSelectedElement = null;
+      mimiTypeSelected = null;
+      extensoRow.innerHTML = '';
+      numeralRow.innerHTML = '';
+      btnMimiMain.textContent = 'Iniciar Nível';
+      btnMimiMain.onclick = startMimiGame;
+
+      // Se já jogou antes, abre direto no nível salvo
+      if (progresso.mimiLevel && progresso.mimiLevel > 1) {
+        mimiCurrentLevel = progresso.mimiLevel;
+      } else {
+        mimiCurrentLevel = 1;
+      }
+      mostrarEscolhaNivelMimi();
     }
 
     function checkMimiWin() {
-      if (mimiMatchesCompleted === 10) {
-        if (mimiCurrentLevel === 1) {
-          mimiFeedback.textContent = '🎉 Nível 1 completo! Próximo nível (11-20)...';
-          mimiFeedback.className = 'game-feedback success';
-          mimiCurrentLevel = 2;
-          setTimeout(startMimiGame, 2500);
-        } else {
-          mimiFeedback.textContent = '🏆 Parabéns! Todos os níveis concluídos!';
-          mimiFeedback.className = 'game-feedback success';
-          document.querySelector('#mimi-game-controls button').textContent = 'Jogar Novamente';
-          mimiCurrentLevel = 1;
-        }
+      if (mimiMatchesCompleted === mimiPairsToMatch) {
+        mimiFeedback.textContent = `🎉 Parabéns! Você completou o ${getMimiLevelData(mimiCurrentLevel).label}!`;
+        mimiFeedback.className = 'game-feedback success';
+
+        const levelData = getMimiLevelData(mimiCurrentLevel);
+        const nextLevel = MIMI_LEVELS.find(lv => lv.id === mimiCurrentLevel + 1);
+
+        setTimeout(() => {
+          mostrarVitoria('mimi', {
+            mensagem: `Você completou o ${levelData.label} (${levelData.range})!${nextLevel ? ' Que tal o próximo?' : ''}`,
+            restartFn: () => {
+              document.getElementById('mimiGameModal').classList.add('active');
+              document.body.classList.add('modal-open');
+              if (nextLevel) {
+                escolherNivelMimi(nextLevel.id);
+              } else {
+                escolherNivelMimi(mimiCurrentLevel);
+              }
+            }
+          });
+        }, 500);
       }
     }
 
@@ -1054,27 +1744,50 @@
       }
 
       if (value === parseInt(mimiSelectedElement.dataset.value)) {
+        // ACERTO
+        tocarAcerto();
+        vibrarAcerto();
+        el.classList.add('correct-flash');
+        mimiSelectedElement.classList.add('correct-flash');
+
+        setTimeout(() => {
+          el.classList.remove('correct-flash');
+          if (mimiSelectedElement) mimiSelectedElement.classList.remove('correct-flash');
+          el.classList.add('matched');
+          if (mimiSelectedElement) mimiSelectedElement.classList.add('matched');
+          if (mimiSelectedElement) mimiSelectedElement.classList.remove('selected');
+          mimiSelectedElement = null;
+          mimiTypeSelected = null;
+        }, 400);
+
         mimiFeedback.textContent = `✅ Acerto! Número ${value} combinado.`;
         mimiFeedback.className = 'game-feedback success';
-        el.classList.add('matched');
-        mimiSelectedElement.classList.add('matched');
-        mimiSelectedElement.classList.remove('selected');
-        mimiSelectedElement = null;
-        mimiTypeSelected = null;
         mimiMatchesCompleted++;
         checkMimiWin();
       } else {
+        // ERRO
+        tocarErro();
+        vibrarErro();
+        el.classList.add('error');
+        if (mimiSelectedElement) mimiSelectedElement.classList.add('error');
+        setTimeout(() => {
+          el.classList.remove('error');
+          if (mimiSelectedElement) mimiSelectedElement.classList.remove('error');
+        }, 600);
+
         mimiFeedback.textContent = `❌ Erro! ${mimiSelectedElement.textContent} não é ${el.textContent}.`;
         mimiFeedback.className = 'game-feedback error';
-        mimiSelectedElement.classList.remove('selected');
+        if (mimiSelectedElement) mimiSelectedElement.classList.remove('selected');
         mimiSelectedElement = null;
         mimiTypeSelected = null;
         setTimeout(() => {
           mimiFeedback.className = 'game-feedback';
-          mimiFeedback.textContent = `Tente novamente. ${10 - mimiMatchesCompleted} pares restantes.`;
+          mimiFeedback.textContent = `Tente novamente. ${mimiPairsToMatch - mimiMatchesCompleted} pares restantes.`;
         }, 2000);
       }
     }
+
+    construirSeletorNiveis();
 
     /* ============================================ */
     /* TIKO                                         */
@@ -1188,6 +1901,8 @@
       if (adj.includes(idx)) {
         [puzzleState[idx], puzzleState[emptyIdx]] = [puzzleState[emptyIdx], puzzleState[idx]];
         renderTikoPuzzle();
+        tocarAcerto();
+        vibrarAcerto();
 
         if (checkTikoWin()) {
           isTikoGameRunning = false;
@@ -1201,14 +1916,28 @@
             finalTile.style.backgroundPosition = getTilePosition(TILE_COUNT - 1);
             TIKO_GRID.querySelectorAll('.puzzle-tile').forEach(t => t.removeEventListener('click', handleTikoClick));
           }
+
+          setTimeout(() => {
+            mostrarVitoria('tiko', {
+              mensagem: 'Você restaurou a imagem secreta do Tiko!',
+              restartFn: () => {
+                document.getElementById('tikoGameModal').classList.add('active');
+                document.body.classList.add('modal-open');
+                resetTikoGame();
+                startTikoGame();
+              }
+            });
+          }, 700);
         } else {
           TIKO_FEEDBACK.textContent = 'Movimento realizado. Continue!';
           TIKO_FEEDBACK.className = 'game-feedback';
         }
       } else {
+        tocarErro();
+        vibrarErro();
         TIKO_FEEDBACK.textContent = '❌ Clique em uma peça adjacente ao espaço vazio.';
         TIKO_FEEDBACK.className = 'game-feedback error';
-        setTimeout(() => { 
+        setTimeout(() => {
           if (isTikoGameRunning) {
             TIKO_FEEDBACK.textContent = 'Continue a missão!';
             TIKO_FEEDBACK.className = 'game-feedback';
@@ -1234,7 +1963,7 @@
         o: Math.random()
       }));
     }
-    
+
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
@@ -1252,6 +1981,11 @@
       requestAnimationFrame(drawStars);
     }
     drawStars();
+
+    /* ============================================ */
+    /* INICIALIZA PROGRESSO NA UI                   */
+    /* ============================================ */
+    atualizarUIProgresso();
   </script>
   <script>
     if ('serviceWorker' in navigator) {
