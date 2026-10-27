@@ -1161,12 +1161,66 @@ body.erro {
   }
 }
 
+/* ============================================ */
+/* BOTÃO DE VOZ                                 */
+/* ============================================ */
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.btn-voz {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: rgba(144, 208, 255, 0.1);
+  border: 2px solid rgba(144, 208, 255, 0.4);
+  border-radius: 50%;
+  color: #90d0ff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-voz:hover {
+  background: rgba(144, 208, 255, 0.22);
+  border-color: #90d0ff;
+  transform: translateY(-1px);
+}
+.btn-voz:focus-visible {
+  outline: 4px solid #f2e884;
+  outline-offset: 3px;
+}
+.btn-voz.mudo {
+  opacity: 0.45;
+  border-style: dashed;
+}
+
+/* Estado do overlay quando está lendo (feedback visual opcional) */
+body.falando .modal-content h2 {
+  animation: nada-piscar 0.3s ease;
+}
+
+@media (max-width: 560px) {
+  .btn-voz {
+    width: 40px;
+    height: 40px;
+    font-size: 1.05rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pet-orbit img { animation: none !important; opacity: 0.2; }
   #orbit-luna img { top: 10%; left: 0; }
   #orbit-bolt img { top: 30%; left: 0; }
   #orbit-mimi img { top: 70%; left: 0; }
   #orbit-tiko img { top: 5%; left: 0; }
+  .btn-voz { transition: none; }
   .planet.highlight { transform: none; }
   .mission-square { transition: none; }
   .victory-pet { animation: none !important; }
