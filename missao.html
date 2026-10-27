@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#040420" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="AstroPets" />
+  <title>AstroPets - Escolha sua Missão</title>
+  <link rel="stylesheet" href="missao.css" />
+</head>
+<body>
+  <canvas id="stars"></canvas>
+
+  <img src="luna.png" alt="" class="floating-pet" id="pet-luna-float">
+  <img src="Bolt.png" alt="" class="floating-pet" id="pet-bolt-float">
+  <img src="mimi.png" alt="" class="floating-pet" id="pet-mimi-float">
+  <img src="tiko.png" alt="" class="floating-pet" id="pet-tiko-float">
+  <img src="pet-extra.png" alt="" class="floating-pet" id="pet-placeholder-float">
+
+  <header class="page-header">
+    <div class="header-top">
+      <a href="index.html" class="btn-inicio" aria-label="Voltar ao início">← Início</a>
+    </div>
+    <h1 class="page-title">Escolha sua Missão</h1>
+    <div class="page-subtitle">AstroPets</div>
+  </header>
+
+  <div class="mission-grid">
+
+    <div class="mission-square" id="mission-luna" tabindex="0" role="button" onclick="openGame('luna')" onkeydown="if(event.key==='Enter'||event.key===' ')openGame('luna')">
+      <div class="mission-emoji">🧠</div>
+      <div class="pet-name">Luna</div>
+      <div class="mission-name">Memória Cósmica</div>
+      <div class="mission-description">Repita a sequência de luzes para treinar foco e memória.</div>
+    </div>
+
+    <div class="mission-square" id="mission-bolt" tabindex="0" role="button" onclick="openGame('bolt')" onkeydown="if(event.key==='Enter'||event.key===' ')openGame('bolt')">
+      <div class="mission-emoji">🌈</div>
+      <div class="pet-name">Bolt</div>
+      <div class="mission-name">Assimilar as Cores</div>
+      <div class="mission-description">Combine o nome da cor com o bloco colorido correspondente.</div>
+    </div>
+
+    <div class="mission-square" id="mission-mimi" tabindex="0" role="button" onclick="openGame('mimi')" onkeydown="if(event.key==='Enter'||event.key===' ')openGame('mimi')">
+      <div class="mission-emoji">🔢</div>
+      <div class="pet-name">Mimi</div>
+      <div class="mission-name">Match Numérico Astral</div>
+      <div class="mission-description">Combine o extenso com o numeral correto em cada rodada.</div>
+    </div>
+
+    <div class="mission-square" id="mission-tiko" tabindex="0" role="button" onclick="openGame('tiko')" onkeydown="if(event.key==='Enter'||event.key===' ')openGame('tiko')">
+      <div class="mission-emoji">🧩</div>
+      <div class="pet-name">Tiko</div>
+      <div class="mission-name">Quebra-cabeça Astral</div>
+      <div class="mission-description">Deslize as peças e recrie a imagem secreta da tartaruga.</div>
+    </div>
+
+  </div>
+
+  <!-- LUNA -->
+  <div id="lunaGameModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="luna-title">
+    <div class="modal-content">
+      <button class="close-button" onclick="closeGame('luna')" aria-label="Fechar missão da Luna">&times;</button>
+      <h2 id="luna-title" tabindex="-1">Missão: Memória Cósmica da Luna</h2>
+      <p>Observe a sequência e repita na mesma ordem.</p>
+
+      <div class="planets-grid" id="planets-grid">
+        <button class="planet" id="p1" aria-label="Luna, a gata">
+          <img src="mimi.png" alt="" />
+        </button>
+        <button class="planet" id="p2" aria-label="Bolt, o cachorro">
+          <img src="Bolt.png" alt="" />
+        </button>
+        <button class="planet" id="p3" aria-label="Mimi, a coelha">
+          <img src="mimi.png" alt="" />
+        </button>
+        <button class="planet" id="p4" aria-label="Tiko, a tartaruga">
+          <img src="tiko.png" alt="" />
+        </button>
+      </div>
+
+      <div id="feedback-memoria" class="game-feedback" aria-live="polite" aria-atomic="true">Clique em "Começar" para ver a sequência.</div>
+
+      <div id="luna-controls">
+        <button class="game-action-button" id="btn-luna-start" onclick="iniciarMemoria()">Começar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOLT -->
+  <div id="boltGameModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="bolt-title">
+    <div class="modal-content">
+      <button class="close-button" onclick="closeGame('bolt')" aria-label="Fechar missão do Bolt">&times;</button>
+      <h2 id="bolt-title" tabindex="-1">Missão: Assimilar as Cores do Bolt</h2>
+      <div class="game-feedback" id="bolt-feedback" aria-live="polite" aria-atomic="true">Clique no nome da cor e depois no bloco colorido correspondente.</div>
+      <div class="match-container">
+        <div class="match-grid" id="bolt-match-grid">
+          <div class="row" id="color-name-row"></div>
+          <div class="row" id="color-block-row"></div>
+        </div>
+      </div>
+      <div id="bolt-game-controls">
+        <button class="game-action-button" onclick="startBoltGame()">Iniciar Jogo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIMI -->
+  <div id="mimiGameModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="mimi-title">
+    <div class="modal-content">
+      <button class="close-button" onclick="closeGame('mimi')" aria-label="Fechar missão da Mimi">&times;</button>
+      <h2 id="mimi-title" tabindex="-1">Missão: Match Numérico Astral</h2>
+
+      <div id="mimi-level-step">
+        <p>Escolha o nível que você quer jogar:</p>
+        <div class="mimi-level-selector" id="mimi-level-selector" role="radiogroup" aria-label="Escolha o nível"></div>
+      </div>
+
+      <div id="mimi-game-step" class="mimi-game-area">
+        <div class="game-feedback" id="mimi-feedback" aria-live="polite" aria-atomic="true">
+          Clique no número por extenso e depois no numeral correto.
+        </div>
+
+        <div class="match-container">
+          <div class="match-grid" id="match-grid">
+            <div class="row" id="extenso-row"></div>
+            <div class="row" id="numeral-row"></div>
+          </div>
+        </div>
+
+        <div id="mimi-game-info">
+          Nível: <span id="mimi-level">1 (1-10)</span>
+        </div>
+
+        <div id="mimi-game-controls" style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+          <button class="game-action-button" id="btn-mimi-main" onclick="startMimiGame()">Iniciar Nível</button>
+          <button class="game-action-button" onclick="voltarEscolherNivelMimi()" style="background:transparent; color:#a8c8f0; border:2px solid #a8c8f0; box-shadow:none;">
+            Trocar Nível
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIKO -->
+  <div id="tikoGameModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="tiko-title">
+    <div class="modal-content">
+      <button class="close-button" onclick="closeGame('tiko')" aria-label="Fechar missão do Tiko">&times;</button>
+      <h2 id="tiko-title" tabindex="-1">Missão: Quebra-cabeça Astral do Tiko</h2>
+      <div class="game-feedback" id="tiko-feedback" aria-live="polite" aria-atomic="true">Reorganize as peças para formar a imagem completa.</div>
+      <div class="puzzle-wrapper">
+        <div class="puzzle-grid" id="tiko-puzzle-grid"></div>
+      </div>
+      <div id="tiko-game-controls">
+        <button class="game-action-button" onclick="startTikoGame()">Iniciar Quebra-cabeça</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VITÓRIA -->
+  <div id="victoryOverlay" class="victory-overlay" role="dialog" aria-modal="true" aria-labelledby="victory-title">
+    <div class="victory-panel">
+      <div class="victory-stars" aria-hidden="true">
+        <span>⭐</span><span>✨</span><span>⭐</span><span>✨</span><span>⭐</span><span>✨</span>
+      </div>
+      <img id="victory-pet-img" class="victory-pet" src="luna.png" alt="">
+      <h2 id="victory-title" class="victory-title" tabindex="-1">Parabéns!</h2>
+      <p id="victory-message" class="victory-message">Você completou a missão!</p>
+      <div class="victory-buttons">
+        <button class="game-action-button" id="btn-victory-again">Jogar de novo</button>
+        <button class="game-action-button" id="btn-victory-other" style="background:transparent; color:#90d0ff; border:2px solid #90d0ff; box-shadow:none;">Outra missão</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="missao.js"></script>
+</body>
+</html>
