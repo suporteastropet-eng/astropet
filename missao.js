@@ -7,7 +7,6 @@ let vozAtiva = true;
 let vozDesbloqueada = false;
 let vozFalando = false;
 
-// Fila: só uma fala roda por vez
 let filaFala = Promise.resolve();
 
 function carregarPreferenciaVoz() {
@@ -68,10 +67,7 @@ function desbloquearVoz() {
   document.addEventListener(evt, desbloquearVoz, { once: true, passive: true });
 });
 
-/**
- * Fala UM texto. Retorna Promise que resolve no onend/onerror.
- * Tem retry automático se a fala não começar.
- */
+/* Fala uma única frase curta com retry e watchdog. */
 function falarUmTexto(texto, opcoes, tentativa = 1) {
   return new Promise((resolve) => {
     if (!('speechSynthesis' in window)) {
@@ -81,8 +77,6 @@ function falarUmTexto(texto, opcoes, tentativa = 1) {
 
     try {
       if (!vozDesbloqueada) desbloquearVoz();
-
-      // Pequeno delay após cancel evita bug do Chrome
       speechSynthesis.cancel();
 
       setTimeout(() => {
@@ -109,24 +103,15 @@ function falarUmTexto(texto, opcoes, tentativa = 1) {
           resolve();
         };
 
-        u.onstart = () => {
-          iniciou = true;
-        };
-
-        u.onend = () => {
-          finalizar();
-        };
-
+        u.onstart = () => { iniciou = true; };
+        u.onend = () => { finalizar(); };
         u.onerror = (e) => {
-          // "interrupted" acontece quando cancel() é chamado antes.
-          // "canceled" idem. Nesses casos, tentar de novo.
           if ((e.error === 'interrupted' || e.error === 'canceled') && tentativa < 2) {
             if (finalizado) return;
             finalizado = true;
             clearTimeout(timeoutDuracao);
             clearTimeout(timeoutInicio);
             clearInterval(resumeInterval);
-            // Retry com pequeno delay
             setTimeout(() => {
               falarUmTexto(texto, opcoes, tentativa + 1).then(resolve);
             }, 200);
@@ -135,19 +120,19 @@ function falarUmTexto(texto, opcoes, tentativa = 1) {
           finalizar();
         };
 
-        // Watchdog 1: se não começou em 1.5s, tenta de novo
         const timeoutInicio = setTimeout(() => {
           if (!iniciou && !finalizado && tentativa < 2) {
             try { speechSynthesis.cancel(); } catch (e) {}
             finalizado = true;
+            clearTimeout(timeoutDuracao);
+            clearInterval(resumeInterval);
             setTimeout(() => {
               falarUmTexto(texto, opcoes, tentativa + 1).then(resolve);
             }, 200);
           }
         }, 1500);
 
-        // Watchdog 2: duração máxima proporcional ao texto (mín 4s, máx 20s)
-        const duracaoMax = Math.max(4000, Math.min(20000, texto.length * 80 + 3000));
+        const duracaoMax = Math.max(3000, Math.min(12000, texto.length * 100 + 2000));
         const timeoutDuracao = setTimeout(() => {
           if (!finalizado) {
             try { speechSynthesis.cancel(); } catch (e) {}
@@ -155,7 +140,6 @@ function falarUmTexto(texto, opcoes, tentativa = 1) {
           }
         }, duracaoMax);
 
-        // Chrome às vezes "pausa" a síntese sozinho. Força resume a cada 5s.
         const resumeInterval = setInterval(() => {
           try {
             if (speechSynthesis.paused) speechSynthesis.resume();
@@ -163,22 +147,43 @@ function falarUmTexto(texto, opcoes, tentativa = 1) {
         }, 5000);
 
         speechSynthesis.speak(u);
-
-      }, 60); // delay após cancel
+      }, 60);
     } catch (e) {
       resolve();
     }
   });
 }
 
-/**
- * Fala uma fila de textos (um após o outro).
- * Retorna Promise que resolve quando TODOS terminarem.
- */
+/* Quebra texto em frases curtas para evitar bug do Chrome. */
+function dividirEmFrases(texto) {
+  const partes = texto
+    .split(/(?<=[.!?;:])\s+|\n+/)
+    .map(p => p.trim())
+    .filter(p => p.length > 0);
+
+  const resultado = [];
+  partes.forEach(p => {
+    if (p.length <= 120) {
+      resultado.push(p);
+    } else {
+      p.split(/(?<=,)\s+/).forEach(sub => {
+        const s = sub.trim();
+        if (s.length > 0) resultado.push(s);
+      });
+    }
+  });
+
+  return resultado.map(p => {
+    if (!/[.!?]$/.test(p)) return p + '.';
+    return p;
+  });
+}
+
+/* Fala (fila). Retorna Promise que resolve quando TUDO terminar. */
 function falar(texto, opcoes = {}) {
   if (!vozAtiva) return Promise.resolve();
+  if (!('speechSynthesis' in window)) return Promise.resolve();
 
-  // Enfileira para não sobrepor falas
   filaFala = filaFala.then(async () => {
     if (!vozAtiva) return;
 
@@ -186,10 +191,14 @@ function falar(texto, opcoes = {}) {
     document.body.classList.add('falando');
     travarBotoesDuranteFala();
 
-    try {
-      await falarUmTexto(texto, opcoes);
-    } catch (e) {
-      // ignora
+    const frases = dividirEmFrases(texto);
+
+    for (let i = 0; i < frases.length; i++) {
+      if (!vozAtiva) break;
+      try {
+        await falarUmTexto(frases[i], opcoes);
+        await delay(120);
+      } catch (e) {}
     }
 
     vozFalando = false;
@@ -617,9 +626,7 @@ async function piscarSequenciaInteira() {
   feedbackMemoria.className = 'game-feedback observing';
   renderProgressoLuna();
 
-  // Espera a fala terminar antes de piscar
   await falar(`Observe com atenção. ${lunaSequence.length} ${lunaSequence.length === 1 ? 'passo' : 'passos'}`);
-
   await delay(300);
 
   for (let i = 0; i < lunaSequence.length; i++) {
@@ -639,7 +646,6 @@ async function piscarSequenciaInteira() {
   planetElements.forEach(p => p.classList.add('turn-active'));
   renderProgressoLuna();
 
-  // Fala "Sua vez!" e trava até terminar
   await falar('Sua vez! Repita a sequência.');
 }
 
