@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#040420" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="AstroPets" />
+  <title>AstroPets</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      background: radial-gradient(1200px 600px at 10% 20%, rgba(4,4,32,0.45), transparent 40%),
+                  linear-gradient(120deg, #040420 0%, #0b0b3a 45%, #1a1a59 100%);
+      background-color: #040420;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center; 
+      position: relative;
+      font-family: 'Poppins', Arial, sans-serif;
+      color: #e7e9ff;
+    }
+
+    #stars {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    .container {
+      z-index: 1; 
+      text-align: center;
+      padding: 20px;
+    }
+
+    .logo-text {
+      font-size: 5rem;
+      font-weight: bold;
+      color: #e6e05b; /* Amarelo Estelar */
+      text-shadow: 0 0 20px rgba(230, 224, 91, 0.7);
+      margin-bottom: 20px;
+      animation: pulsate 2s infinite alternate;
+    }
+
+    .subtitle {
+      font-size: 1.5rem;
+      color: #90d0ff; /* Azul Neon */
+      margin-bottom: 40px;
+      text-shadow: 0 0 10px rgba(144, 208, 255, 0.5);
+    }
+
+    .start-button {
+      padding: 15px 30px;
+      background-color: #e6e05b;
+      color: #040420;
+      border: none;
+      border-radius: 50px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(230, 224, 91, 0.5);
+      transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+    }
+
+    .start-button:hover {
+      background-color: #fff066;
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(255, 240, 102, 0.8);
+    }
+    
+    @keyframes pulsate {
+      from { transform: scale(1); }
+      to { transform: scale(1.05); }
+    }
+
+    
+    /*ESTILOS PARA OS ANIMAIS FLUTUANTES*/
+    
+    .floating-pet {
+        position: absolute;
+        width: 160px; /* Tamanho dos pets */
+        height: auto;
+        animation: float-pet 10s ease-in-out infinite;
+        z-index: 0; /* Abaixo do conteúdo principal */
+        opacity: 0.7;
+        filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+    }
+
+    /* Posições iniciais e delays diferentes para cada pet */
+    #pet-luna-float {
+        top: 5%;
+        left: 15%;
+        animation-delay: 0s;
+        animation-duration: 9s;
+        animation-name: float-pet-wide-1;
+    }
+
+    #pet-bolt-float {
+        top: 60%;
+        right: 15%;
+        animation-delay: 2s;
+        animation-duration: 11s;
+        transform: scaleX(-1);
+        animation-name: float-pet-wide-2;
+    }
+
+    #pet-mimi-float {
+        bottom: 10%;
+        left: 5%;
+        animation-delay: 4s;
+        animation-duration: 10s;
+        animation-name: float-pet-wide-3;
+    }
+    
+    #pet-tiko-float {
+        top: 10%;
+        right: 5%;
+        width: 150px; 
+        animation-delay: 6s;
+        animation-duration: 12s;
+        animation-name: float-pet-wide-4; 
+    }
+
+    /* ANIMAÇÕES */
+    @keyframes float-pet-wide-1 {
+        0% { transform: translate(0, 0) rotate(0deg); }
+        20% { transform: translate(30px, 20px) rotate(3deg); }
+        40% { transform: translate(0, 40px) rotate(0deg); }
+        60% { transform: translate(-40px, 25px) rotate(-4deg); }
+        80% { transform: translate(-10px, 10px) rotate(-1deg); }
+        100% { transform: translate(0, 0) rotate(0deg); }
+    }
+    @keyframes float-pet-wide-2 {
+        0% { transform: translate(0, 0) scaleX(-1); }
+        20% { transform: translate(-20px, 30px) rotate(-2deg) scaleX(-1); }
+        40% { transform: translate(-40px, 0) rotate(0deg) scaleX(-1); }
+        60% { transform: translate(-10px, -20px) rotate(3deg) scaleX(-1); }
+        80% { transform: translate(20px, 10px) rotate(1deg) scaleX(-1); }
+        100% { transform: translate(0, 0) scaleX(-1); }
+    }
+    @keyframes float-pet-wide-3 {
+        0% { transform: translate(0, 0) rotate(0deg); }
+        20% { transform: translate(-20px, 10px) rotate(-2deg); }
+        40% { transform: translate(10px, -30px) rotate(0deg); }
+        60% { transform: translate(30px, 20px) rotate(4deg); }
+        80% { transform: translate(5px, -15px) rotate(-1deg); }
+        100% { transform: translate(0, 0) rotate(0deg); }
+    }
+    @keyframes float-pet-wide-4 {
+        0% { transform: translate(0, 0) rotate(0deg); }
+        20% { transform: translate(-30px, -20px) rotate(-3deg); }
+        40% { transform: translate(0, -40px) rotate(0deg); }
+        60% { transform: translate(40px, -25px) rotate(4deg); }
+        80% { transform: translate(10px, -10px) rotate(1deg); }
+        100% { transform: translate(0, 0) rotate(0deg); }
+    }
+
+
+    /* BOTÃO / DICA DE INSTALAÇÃO (PWA) */
+    .install-area { margin-top: 22px; min-height: 48px; }
+    .install-button {
+      display: none;
+      padding: 10px 22px;
+      background: transparent;
+      color: #90d0ff;
+      border: 2px solid #90d0ff;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .install-button:hover { background: #90d0ff; color: #040420; }
+    .install-hint {
+      display: none;
+      max-width: 320px;
+      margin: 0 auto;
+      font-size: 0.9rem;
+      color: #90d0ff;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stars"></canvas>
+  
+  <img src="luna.png" alt="Luna Flutuando" class="floating-pet" id="pet-luna-float">
+  <img src="Bolt.png" alt="Bolt Flutuando" class="floating-pet" id="pet-bolt-float">
+  <img src="mimi.png" alt="Mimi Flutuando" class="floating-pet" id="pet-mimi-float">
+  <img src="tiko.png" alt="Tiko Flutuando" class="floating-pet" id="pet-tiko-float"> 
+
+  <div class="container">
+    <div class="logo-text">AstroPets</div>
+    <div class="subtitle"><br><br></div>
+    <button class="start-button" onclick="window.location.href='missao.html'">
+      Iniciar Missão
+    </button>
+    <div class="install-area">
+      <button class="install-button" id="btn-instalar" type="button">📲 Instalar app</button>
+      <p class="install-hint" id="dica-ios">Para instalar: toque em <strong>Compartilhar</strong> e depois em <strong>Adicionar à Tela de Início</strong>.</p>
+    </div>
+  </div>
+
+  <script>
+    //ESTRELAS DE FUNDO
+    const canvas = document.getElementById('stars');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const stars = Array.from({ length: 120 }, () => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      r: Math.random() * 1.5 + 0.3,
+      o: Math.random()
+    }));
+
+    function drawStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let s of stars) {
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${0.7 + 0.3 * Math.sin(Date.now() / 1000 + s.o * 6.28)})`;
+        ctx.fill();
+      }
+      requestAnimationFrame(drawStars);
+    }
+
+    drawStars();
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+  </script>
+  <script>
+    // INSTALAÇÃO DO APP (PWA)
+    (function () {
+      const btn = document.getElementById('btn-instalar');
+      const dicaIOS = document.getElementById('dica-ios');
+      const jaInstalado = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      if (jaInstalado) return;
+
+      let promptInstalar = null;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        promptInstalar = e;
+        btn.style.display = 'inline-block';
+      });
+      btn.addEventListener('click', async () => {
+        if (!promptInstalar) return;
+        promptInstalar.prompt();
+        await promptInstalar.userChoice;
+        promptInstalar = null;
+        btn.style.display = 'none';
+      });
+      window.addEventListener('appinstalled', () => { btn.style.display = 'none'; });
+
+      // iPhone/iPad não têm botão automático: mostra a dica manual
+      const ua = navigator.userAgent;
+      const ehIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      if (ehIOS) dicaIOS.style.display = 'block';
+    })();
+  </script>
+</body>
+</html>

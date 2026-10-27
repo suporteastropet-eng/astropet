@@ -1,0 +1,1131 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#040420" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="AstroPets" />
+  <title>AstroPets - Seleção de Missões</title>
+  <style>
+    /* ============================================ */
+    /* RESET E BASE                                 */
+    /* ============================================ */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+
+    body {
+      background: radial-gradient(1200px 600px at 10% 20%, rgba(4,4,32,0.45), transparent 40%),
+                  linear-gradient(120deg, #040420 0%, #0b0b3a 45%, #1a1a59 100%);
+      background-color: #040420;
+      min-height: 100vh;
+      font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+      color: #e7e9ff;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #stars {
+      position: fixed;
+      inset: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ============================================ */
+    /* HEADER / TÍTULO                              */
+    /* ============================================ */
+    .page-header {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 48px 20px 32px;
+      width: 100%;
+    }
+    .page-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 700;
+      color: #90d0ff;
+      text-shadow: 0 0 20px rgba(144, 208, 255, 0.55);
+      letter-spacing: 0.5px;
+    }
+    .page-subtitle {
+      margin-top: 8px;
+      font-size: 0.95rem;
+      color: #8fa2d6;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* ============================================ */
+    /* GRADE DE MISSÕES — LINHA ÚNICA CENTRALIZADA  */
+    /* ============================================ */
+    .mission-grid {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: center;
+      align-items: stretch;
+      gap: 24px;
+      width: 100%;
+      max-width: 1180px;
+      padding: 0 24px 60px;
+      margin: auto;
+    }
+
+    .mission-square {
+      flex: 1 1 0;
+      max-width: 260px;
+      min-width: 200px;
+      aspect-ratio: 1 / 1;
+      background: linear-gradient(160deg, rgba(30, 30, 100, 0.85), rgba(10, 10, 50, 0.9));
+      border: 2px solid rgba(230, 224, 91, 0.65);
+      border-radius: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      padding: 20px 14px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+      animation: float-mission 5s ease-in-out infinite;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Faixa colorida no topo de cada card */
+    .mission-square::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: var(--accent, #e6e05b);
+      opacity: 0.9;
+    }
+
+    .mission-square:hover {
+      transform: translateY(-6px) scale(1.03);
+      box-shadow: 0 12px 40px rgba(144, 208, 255, 0.35);
+      border-color: var(--accent, #e6e05b);
+    }
+
+    #mission-luna { --accent: #5b9eff; animation-delay: 0s; }
+    #mission-bolt { --accent: #ff5c5c; animation-delay: 0.6s; }
+    #mission-mimi { --accent: #c07bff; animation-delay: 1.2s; }
+    #mission-tiko { --accent: #4ee04e; animation-delay: 1.8s; }
+
+    .mission-emoji {
+      font-size: 3rem;
+      line-height: 1;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+    }
+    .pet-name {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--accent, #e6e05b);
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .mission-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #e7e9ff;
+      margin-bottom: 10px;
+    }
+    .mission-description {
+      font-size: 0.78rem;
+      color: #a8b4d9;
+      line-height: 1.4;
+      padding: 0 4px;
+    }
+
+    @keyframes float-mission {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    /* ============================================ */
+    /* MODAIS                                       */
+    /* ============================================ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 2, 20, 0.92);
+      backdrop-filter: blur(6px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      padding: 24px;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal-content {
+      background: linear-gradient(160deg, #101046 0%, #070730 100%);
+      padding: 36px 32px 32px;
+      border-radius: 22px;
+      width: 100%;
+      max-width: 760px;
+      max-height: 92vh;
+      overflow-y: auto;
+      border: 1px solid rgba(144, 208, 255, 0.3);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(144, 208, 255, 0.1) inset;
+      text-align: center;
+      position: relative;
+    }
+
+    .modal-content h2 {
+      font-size: 1.5rem;
+      color: #90d0ff;
+      margin-bottom: 6px;
+      padding-right: 30px;
+      padding-left: 30px;
+    }
+    .modal-content > p {
+      font-size: 0.9rem;
+      color: #8fa2d6;
+      margin-bottom: 8px;
+    }
+
+    .close-button {
+      position: absolute;
+      top: 14px;
+      right: 18px;
+      font-size: 1.6rem;
+      line-height: 1;
+      color: #ff6666;
+      cursor: pointer;
+      width: 34px; height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background 0.2s, transform 0.2s;
+      user-select: none;
+    }
+    .close-button:hover {
+      background: rgba(255, 102, 102, 0.15);
+      transform: rotate(90deg);
+    }
+
+    .game-action-button {
+      padding: 12px 28px;
+      background: linear-gradient(135deg, #90d0ff, #6ab8ff);
+      color: #040420;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 1rem;
+      margin-top: 24px;
+      box-shadow: 0 6px 20px rgba(144, 208, 255, 0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+      letter-spacing: 0.3px;
+    }
+    .game-action-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(144, 208, 255, 0.55);
+    }
+    .game-action-button:active {
+      transform: translateY(0);
+    }
+
+    .mimi-feedback {
+      font-size: 1rem;
+      font-weight: 500;
+      color: #e6e05b;
+      margin: 12px 0 20px;
+      min-height: 1.5em;
+      transition: color 0.2s;
+    }
+    .mimi-feedback.error { color: #ff7070; }
+
+    /* ============================================ */
+    /* LUNA — LINHA ÚNICA DE LUAS                   */
+    /* ============================================ */
+    .planets-grid {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin: 28px auto 8px;
+      max-width: 100%;
+    }
+    .planet {
+      width: 92px;
+      height: 92px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.8rem;
+      background: radial-gradient(circle at 30% 30%, rgba(80, 142, 230, 0.35), rgba(20, 20, 70, 0.7));
+      border: 2px solid rgba(144, 208, 255, 0.35);
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .planet:hover {
+      border-color: #90d0ff;
+      transform: translateY(-3px);
+    }
+    .planet.highlight {
+      background: radial-gradient(circle at 30% 30%, #b5e0ff, #90d0ff);
+      border-color: #ffffff;
+      box-shadow: 0 0 32px #90d0ff;
+      transform: scale(1.1);
+    }
+    .planet.error {
+      background: radial-gradient(circle at 30% 30%, #ff8a8a, #ff4444);
+      border-color: #ffaaaa;
+      animation: shake 0.4s;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      75% { transform: translateX(8px); }
+    }
+
+    /* ============================================ */
+    /* BOLT e MIMI — LINHAS DE MATCH                */
+    /* ============================================ */
+    .match-container { margin: 8px 0; }
+    .match-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .match-item {
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 2px solid rgba(144, 208, 255, 0.28);
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #e7e9ff;
+      min-width: 84px;
+      text-align: center;
+      transition: all 0.18s ease;
+      user-select: none;
+      letter-spacing: 0.4px;
+    }
+    .match-item:hover {
+      border-color: #90d0ff;
+      background: rgba(144, 208, 255, 0.15);
+      transform: translateY(-2px);
+    }
+    .match-item.selected {
+      border-color: #e6e05b;
+      background: rgba(230, 224, 91, 0.2);
+      box-shadow: 0 0 18px rgba(230, 224, 91, 0.6);
+      transform: translateY(-2px);
+    }
+    .match-item.matched {
+      opacity: 0.22;
+      cursor: default;
+      pointer-events: none;
+      border-color: #4ee04e;
+    }
+
+    /* Blocos coloridos do Bolt — cores VIVAS */
+    .color-block-item {
+      min-width: 84px;
+      height: 56px;
+      border: 3px solid rgba(255, 255, 255, 0.35);
+      box-shadow: inset 0 -6px 0 rgba(0,0,0,0.25);
+    }
+    .color-block-item:hover {
+      transform: translateY(-3px) scale(1.04);
+      border-color: #ffffff;
+    }
+
+    .extenso-item { font-size: 0.85rem; letter-spacing: 1px; }
+    .numeral-item { font-size: 1.25rem; min-width: 62px; }
+
+    #mimi-game-info {
+      margin: 8px 0;
+      font-size: 1rem;
+      color: #90d0ff;
+      font-weight: 600;
+    }
+
+    /* ============================================ */
+    /* TIKO — QUEBRA-CABEÇA                         */
+    /* ============================================ */
+    .puzzle-wrapper {
+      display: flex;
+      justify-content: center;
+      margin: 24px 0;
+    }
+    .puzzle-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      width: 320px;
+      height: 320px;
+      border: 4px solid #e6e05b;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 24px rgba(230, 224, 91, 0.4);
+      background: #040420;
+    }
+    .puzzle-tile {
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+      background-image: url('tiko_puzzle_image.png');
+      background-size: 300% 300%;
+      background-repeat: no-repeat;
+      transition: filter 0.15s;
+      border: 1px solid rgba(4, 4, 32, 0.6);
+    }
+    .puzzle-tile.empty {
+      background-image: none;
+      background-color: #040420;
+      cursor: default;
+      border: none;
+    }
+    .puzzle-tile:hover:not(.empty) {
+      filter: brightness(1.25);
+    }
+
+    /* ============================================ */
+    /* PETS FLUTUANTES                              */
+    /* ============================================ */
+    .floating-pet {
+      position: fixed;
+      width: 110px;
+      height: auto;
+      z-index: 0;
+      opacity: 0.7;
+      filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+      pointer-events: none;
+    }
+    #pet-luna-float { top: 12%; left: 4%; animation: float-pet-wide-1 9s ease-in-out infinite; }
+    #pet-bolt-float { top: 72%; left: 6%; transform: scaleX(-1); animation: float-pet-wide-2 11s ease-in-out infinite; }
+    #pet-mimi-float { top: 16%; right: 5%; animation: float-pet-wide-3 10s ease-in-out infinite; }
+    #pet-tiko-float { bottom: 6%; right: 12%; width: 130px; animation: float-pet-wide-4 12s ease-in-out infinite; }
+    #pet-placeholder-float { bottom: 10%; left: 20%; width: 90px; opacity: 0.5; animation: float-pet-wide-5 8s ease-in-out infinite; }
+
+    @keyframes float-pet-wide-1 { 0%,100% { transform: translate(0,0) rotate(0); } 25% { transform: translate(20px,15px) rotate(3deg); } 50% { transform: translate(0,30px) rotate(0); } 75% { transform: translate(-25px,15px) rotate(-3deg); } }
+    @keyframes float-pet-wide-2 { 0%,100% { transform: translate(0,0) scaleX(-1); } 25% { transform: translate(-15px,20px) rotate(-2deg) scaleX(-1); } 50% { transform: translate(-30px,0) rotate(0) scaleX(-1); } 75% { transform: translate(-10px,-15px) rotate(2deg) scaleX(-1); } }
+    @keyframes float-pet-wide-3 { 0%,100% { transform: translate(0,0) rotate(0); } 25% { transform: translate(-15px,8px) rotate(-2deg); } 50% { transform: translate(8px,-25px) rotate(0); } 75% { transform: translate(25px,15px) rotate(3deg); } }
+    @keyframes float-pet-wide-4 { 0%,100% { transform: translate(0,0) rotate(0); } 25% { transform: translate(-25px,-15px) rotate(-3deg); } 50% { transform: translate(0,-30px) rotate(0); } 75% { transform: translate(30px,-20px) rotate(3deg); } }
+    @keyframes float-pet-wide-5 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(8px,12px); } }
+
+    /* ============================================ */
+    /* RESPONSIVO                                   */
+    /* ============================================ */
+    @media (max-width: 1080px) {
+      .mission-grid {
+        flex-wrap: wrap;
+        max-width: 720px;
+      }
+      .mission-square {
+        flex: 1 1 calc(50% - 24px);
+        max-width: none;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .page-header { padding: 28px 16px 20px; }
+      .mission-grid { gap: 16px; padding: 0 16px 40px; }
+      .mission-square {
+        flex: 1 1 100%;
+        aspect-ratio: auto;
+        min-height: 140px;
+        padding: 18px 14px;
+      }
+      .modal-content { padding: 28px 18px 24px; }
+      .planet { width: 68px; height: 68px; font-size: 2rem; }
+      .planets-grid { gap: 10px; }
+      .puzzle-grid { width: 260px; height: 260px; }
+      .floating-pet { width: 70px; opacity: 0.45; }
+      .match-item { min-width: 60px; padding: 10px 12px; font-size: 0.85rem; }
+      .color-block-item { min-width: 60px; height: 44px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stars"></canvas>
+
+  <img src="luna.png" alt="" class="floating-pet" id="pet-luna-float">
+  <img src="Bolt.png" alt="" class="floating-pet" id="pet-bolt-float">
+  <img src="mimi.png" alt="" class="floating-pet" id="pet-mimi-float">
+  <img src="tiko.png" alt="" class="floating-pet" id="pet-tiko-float">
+  <img src="pet-extra.png" alt="" class="floating-pet" id="pet-placeholder-float">
+
+  <header class="page-header">
+    <h1 class="page-title">Escolha sua Missão</h1>
+    <div class="page-subtitle">AstroPets</div>
+  </header>
+
+  <div class="mission-grid">
+
+    <div class="mission-square" id="mission-luna" onclick="openGame('luna')">
+      <div class="mission-emoji">🧠</div>
+      <div class="pet-name">Luna</div>
+      <div class="mission-name">Memória Cósmica</div>
+      <div class="mission-description">Repita a sequência de luzes para treinar foco e memória.</div>
+    </div>
+
+    <div class="mission-square" id="mission-bolt" onclick="openGame('bolt')">
+      <div class="mission-emoji">🌈</div>
+      <div class="pet-name">Bolt</div>
+      <div class="mission-name">Assimilar as Cores</div>
+      <div class="mission-description">Combine o nome da cor com o bloco colorido correspondente.</div>
+    </div>
+
+    <div class="mission-square" id="mission-mimi" onclick="openGame('mimi')">
+      <div class="mission-emoji">🔢</div>
+      <div class="pet-name">Mimi</div>
+      <div class="mission-name">Match Numérico Astral</div>
+      <div class="mission-description">Combine o extenso com o numeral correto em cada rodada.</div>
+    </div>
+
+    <div class="mission-square" id="mission-tiko" onclick="openGame('tiko')">
+      <div class="mission-emoji">🧩</div>
+      <div class="pet-name">Tiko</div>
+      <div class="mission-name">Quebra-cabeça Astral</div>
+      <div class="mission-description">Deslize as peças e recrie a imagem secreta da tartaruga.</div>
+    </div>
+
+  </div>
+
+  <!-- LUNA -->
+  <div id="lunaGameModal" class="modal-overlay">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeGame('luna')">&times;</span>
+      <h2>Missão: Memória Cósmica da Luna</h2>
+      <p>Observe a sequência de luzes e clique nas luas na ordem correta.</p>
+
+      <div class="planets-grid" id="planets-grid">
+        <div class="planet" id="p1">🌙</div>
+        <div class="planet" id="p2">💕</div>
+        <div class="planet" id="p3">😍</div>
+        <div class="planet" id="p4">😜</div>
+      </div>
+
+      <div id="feedback-memoria" class="mimi-feedback" style="color:#90d0ff;"></div>
+      <button class="game-action-button" onclick="iniciarMemoria()">Iniciar Sequência</button>
+    </div>
+  </div>
+
+  <!-- BOLT -->
+  <div id="boltGameModal" class="modal-overlay">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeGame('bolt')">&times;</span>
+      <h2>Missão: Assimilar as Cores do Bolt</h2>
+
+      <p class="mimi-feedback" id="bolt-feedback">Clique no nome da cor e depois no bloco colorido correspondente.</p>
+
+      <div class="match-container">
+        <div class="match-grid" id="bolt-match-grid">
+          <div class="row" id="color-name-row"></div>
+          <div class="row" id="color-block-row"></div>
+        </div>
+      </div>
+
+      <div id="bolt-game-controls">
+        <button class="game-action-button" onclick="startBoltGame()">Iniciar Jogo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIMI -->
+  <div id="mimiGameModal" class="modal-overlay">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeGame('mimi')">&times;</span>
+      <h2>Missão: Match Numérico Astral</h2>
+
+      <p class="mimi-feedback" id="mimi-feedback">Clique no número por extenso e depois no numeral correto.</p>
+
+      <div class="match-container">
+        <div class="match-grid" id="match-grid">
+          <div class="row" id="extenso-row"></div>
+          <div class="row" id="numeral-row"></div>
+        </div>
+      </div>
+
+      <div id="mimi-game-info">
+        Nível: <span id="mimi-level">1 (1-10)</span>
+      </div>
+
+      <div id="mimi-game-controls">
+        <button class="game-action-button" onclick="startMimiGame()">Iniciar Nível</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIKO -->
+  <div id="tikoGameModal" class="modal-overlay">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeGame('tiko')">&times;</span>
+      <h2>Missão: Quebra-cabeça Astral do Tiko</h2>
+
+      <p class="mimi-feedback" id="tiko-feedback">Reorganize as peças para formar a imagem completa.</p>
+
+      <div class="puzzle-wrapper">
+        <div class="puzzle-grid" id="tiko-puzzle-grid"></div>
+      </div>
+
+      <div id="tiko-game-controls">
+        <button class="game-action-button" onclick="startTikoGame()">Iniciar Quebra-cabeça</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ============================================ */
+    /* FLUXO DE MODAIS                              */
+    /* ============================================ */
+    function openGame(petId) {
+      const map = {
+        luna: ['lunaGameModal', resetLunaGame],
+        bolt: ['boltGameModal', resetBoltGame],
+        mimi: ['mimiGameModal', resetMimiGame],
+        tiko: ['tikoGameModal', resetTikoGame]
+      };
+      const [modalId, reset] = map[petId];
+      document.getElementById(modalId).classList.add('active');
+      reset();
+    }
+
+    function closeGame(petId) {
+      const map = {
+        luna: ['lunaGameModal', resetLunaGame],
+        bolt: ['boltGameModal', resetBoltGame],
+        mimi: ['mimiGameModal', resetMimiGame],
+        tiko: ['tikoGameModal', resetTikoGame]
+      };
+      const [modalId, reset] = map[petId];
+      document.getElementById(modalId).classList.remove('active');
+      reset();
+    }
+
+    /* ============================================ */
+    /* LUNA                                         */
+    /* ============================================ */
+    const planetElements = document.querySelectorAll('#planets-grid .planet');
+    const feedbackMemoria = document.getElementById('feedback-memoria');
+    let sequence = [];
+    let playerSequence = [];
+    let isPlayerTurn = false;
+
+    planetElements.forEach(planet => {
+      planet.addEventListener('click', (e) => {
+        if (!isPlayerTurn) return;
+        const clickedId = e.currentTarget.id;
+        playerSequence.push(clickedId);
+
+        e.currentTarget.classList.add('highlight');
+        setTimeout(() => e.currentTarget.classList.remove('highlight'), 200);
+
+        const currentStep = playerSequence.length - 1;
+        if (clickedId !== sequence[currentStep]) {
+          isPlayerTurn = false;
+          e.currentTarget.classList.add('error');
+          feedbackMemoria.textContent = `❌ Erro! Sequência reiniciada. (Acertou ${currentStep} de ${sequence.length})`;
+          sequence = [];
+          playerSequence = [];
+          setTimeout(() => e.currentTarget.classList.remove('error'), 1000);
+        } else if (playerSequence.length === sequence.length) {
+          isPlayerTurn = false;
+          feedbackMemoria.textContent = `✅ Parabéns! Nível ${sequence.length} concluído!`;
+          playerSequence = [];
+          setTimeout(iniciarMemoria, 1500);
+        }
+      });
+    });
+
+    function playSequence(index) {
+      if (index >= sequence.length) {
+        isPlayerTurn = true;
+        feedbackMemoria.textContent = 'Sua vez! Clique na ordem...';
+        return;
+      }
+      const planet = document.getElementById(sequence[index]);
+      planet.classList.add('highlight');
+      setTimeout(() => {
+        planet.classList.remove('highlight');
+        setTimeout(() => playSequence(index + 1), 300);
+      }, 500);
+    }
+
+    function iniciarMemoria() {
+      if (isPlayerTurn) return;
+      feedbackMemoria.textContent = 'Observando...';
+      playerSequence = [];
+      const idx = Math.floor(Math.random() * 4);
+      sequence.push(planetElements[idx].id);
+      playSequence(0);
+    }
+
+    function resetLunaGame() {
+      sequence = [];
+      playerSequence = [];
+      isPlayerTurn = false;
+      feedbackMemoria.textContent = '';
+      planetElements.forEach(p => p.classList.remove('error', 'highlight'));
+    }
+
+    /* ============================================ */
+    /* BOLT — cores vivas                           */
+    /* ============================================ */
+    const colorNameRow = document.getElementById('color-name-row');
+    const colorBlockRow = document.getElementById('color-block-row');
+    const boltFeedback = document.getElementById('bolt-feedback');
+    let boltMatchesCompleted = 0;
+    let boltSelectedElement = null;
+    let boltTypeSelected = null;
+
+    // Cores saturadas e vibrantes (nada pastel)
+    const COLORS_MAP = [
+      { name: "LARANJA",  hex: "#FF6A00" },
+      { name: "AZUL",     hex: "#0055FF" },
+      { name: "VERMELHO", hex: "#E60012" },
+      { name: "AMARELO",  hex: "#FFD700" },
+      { name: "VERDE",    hex: "#00A32E" },
+      { name: "ROSA",     hex: "#FF1493" },
+      { name: "MARROM",   hex: "#7A3E17" },
+      { name: "ROXO",     hex: "#7A00CC" }
+    ];
+
+    function generateBoltGame() {
+      boltMatchesCompleted = 0;
+      colorNameRow.innerHTML = '';
+      colorBlockRow.innerHTML = '';
+      boltSelectedElement = null;
+      boltTypeSelected = null;
+      boltFeedback.textContent = 'Clique no nome da cor e depois no bloco colorido correspondente.';
+      boltFeedback.classList.remove('error');
+
+      const shuffledNames = [...COLORS_MAP].sort(() => Math.random() - 0.5);
+      const shuffledBlocks = [...COLORS_MAP].sort(() => Math.random() - 0.5);
+
+      shuffledNames.forEach(color => {
+        const d = document.createElement('div');
+        d.classList.add('match-item', 'color-name-item');
+        d.textContent = color.name;
+        d.dataset.value = color.name;
+        d.dataset.type = 'name';
+        d.addEventListener('click', handleBoltClick);
+        colorNameRow.appendChild(d);
+      });
+
+      shuffledBlocks.forEach(color => {
+        const d = document.createElement('div');
+        d.classList.add('match-item', 'color-block-item');
+        d.style.backgroundColor = color.hex;
+        d.dataset.value = color.name;
+        d.dataset.type = 'block';
+        d.addEventListener('click', handleBoltClick);
+        colorBlockRow.appendChild(d);
+      });
+    }
+
+    function startBoltGame() {
+      generateBoltGame();
+      document.querySelector('#bolt-game-controls button').textContent = 'Reiniciar Jogo';
+    }
+
+    function resetBoltGame() {
+      generateBoltGame();
+      boltFeedback.textContent = "Clique em 'Iniciar Jogo' para começar.";
+      boltFeedback.classList.remove('error');
+      document.querySelector('#bolt-game-controls button').textContent = 'Iniciar Jogo';
+    }
+
+    function checkBoltWin() {
+      if (boltMatchesCompleted === COLORS_MAP.length) {
+        boltFeedback.textContent = '🎉 Parabéns! Todas as cores foram assimiladas!';
+        boltFeedback.classList.remove('error');
+      }
+    }
+
+    function handleBoltClick(event) {
+      const el = event.currentTarget;
+      if (el.classList.contains('matched')) return;
+      const value = el.dataset.value;
+      const type = el.dataset.type;
+
+      if (!boltSelectedElement) {
+        el.classList.add('selected');
+        boltSelectedElement = el;
+        boltTypeSelected = type;
+        boltFeedback.textContent = `Selecionado: ${value}. Agora clique no correspondente.`;
+        boltFeedback.classList.remove('error');
+        return;
+      }
+
+      if (boltSelectedElement === el) {
+        el.classList.remove('selected');
+        boltSelectedElement = null;
+        boltTypeSelected = null;
+        boltFeedback.textContent = 'Seleção cancelada.';
+        boltFeedback.classList.remove('error');
+        return;
+      }
+
+      if (type === boltTypeSelected) {
+        boltFeedback.textContent = '❌ Escolha um nome E um bloco de cor.';
+        boltFeedback.classList.add('error');
+        setTimeout(() => {
+          boltFeedback.classList.remove('error');
+          boltFeedback.textContent = 'Escolha um nome e depois uma cor.';
+        }, 1000);
+        return;
+      }
+
+      if (value === boltSelectedElement.dataset.value) {
+        boltFeedback.textContent = `✅ Acerto! ${value} combinado.`;
+        boltFeedback.classList.remove('error');
+        el.classList.add('matched');
+        boltSelectedElement.classList.add('matched');
+        boltSelectedElement.classList.remove('selected');
+        boltSelectedElement = null;
+        boltTypeSelected = null;
+        boltMatchesCompleted++;
+        checkBoltWin();
+      } else {
+        boltFeedback.textContent = `❌ Erro! Não é a cor de ${boltSelectedElement.dataset.value}.`;
+        boltFeedback.classList.add('error');
+        boltSelectedElement.classList.remove('selected');
+        boltSelectedElement = null;
+        boltTypeSelected = null;
+        setTimeout(() => {
+          boltFeedback.classList.remove('error');
+          boltFeedback.textContent = `Tente novamente. ${COLORS_MAP.length - boltMatchesCompleted} pares restantes.`;
+        }, 1500);
+      }
+    }
+
+    /* ============================================ */
+    /* MIMI                                         */
+    /* ============================================ */
+    const extensoRow = document.getElementById('extenso-row');
+    const numeralRow = document.getElementById('numeral-row');
+    const mimiFeedback = document.getElementById('mimi-feedback');
+    const mimiLevelDisplay = document.getElementById('mimi-level');
+    let mimiCurrentLevel = 1;
+    let mimiMatchesCompleted = 0;
+    let mimiSelectedElement = null;
+    let mimiTypeSelected = null;
+
+    const NUMBERS_MAP = {
+      1: "UM", 2: "DOIS", 3: "TRÊS", 4: "QUATRO", 5: "CINCO",
+      6: "SEIS", 7: "SETE", 8: "OITO", 9: "NOVE", 10: "DEZ",
+      11: "ONZE", 12: "DOZE", 13: "TREZE", 14: "QUATORZE", 15: "QUINZE",
+      16: "DEZESSEIS", 17: "DEZESSETE", 18: "DEZOITO", 19: "DEZENOVE", 20: "VINTE"
+    };
+
+    function generateMimiGame() {
+      const start = mimiCurrentLevel === 1 ? 1 : 11;
+      const end = mimiCurrentLevel === 1 ? 10 : 20;
+      const rangeText = mimiCurrentLevel === 1 ? '(1-10)' : '(11-20)';
+
+      mimiLevelDisplay.textContent = `${mimiCurrentLevel} ${rangeText}`;
+      mimiMatchesCompleted = 0;
+      extensoRow.innerHTML = '';
+      numeralRow.innerHTML = '';
+      mimiSelectedElement = null;
+      mimiTypeSelected = null;
+      mimiFeedback.textContent = 'Clique no número por extenso e depois no numeral correto.';
+      mimiFeedback.classList.remove('error');
+
+      const nums = [];
+      for (let i = start; i <= end; i++) nums.push(i);
+
+      const shuffledN = [...nums].sort(() => Math.random() - 0.5);
+      const shuffledE = [...nums].sort(() => Math.random() - 0.5);
+
+      shuffledE.forEach(n => {
+        const d = document.createElement('div');
+        d.classList.add('match-item', 'extenso-item');
+        d.textContent = NUMBERS_MAP[n];
+        d.dataset.value = n;
+        d.dataset.type = 'extenso';
+        d.addEventListener('click', handleMimiClick);
+        extensoRow.appendChild(d);
+      });
+      shuffledN.forEach(n => {
+        const d = document.createElement('div');
+        d.classList.add('match-item', 'numeral-item');
+        d.textContent = n;
+        d.dataset.value = n;
+        d.dataset.type = 'numeral';
+        d.addEventListener('click', handleMimiClick);
+        numeralRow.appendChild(d);
+      });
+    }
+
+    function startMimiGame() {
+      generateMimiGame();
+      document.querySelector('#mimi-game-controls button').textContent = 'Reiniciar Nível';
+    }
+
+    function resetMimiGame() {
+      mimiCurrentLevel = 1;
+      generateMimiGame();
+      mimiFeedback.textContent = "Clique em 'Iniciar Nível' para começar.";
+      mimiFeedback.classList.remove('error');
+      document.querySelector('#mimi-game-controls button').textContent = 'Iniciar Nível';
+    }
+
+    function checkMimiWin() {
+      if (mimiMatchesCompleted === 10) {
+        if (mimiCurrentLevel === 1) {
+          mimiFeedback.textContent = '🎉 Nível 1 completo! Próximo nível (11-20)...';
+          mimiCurrentLevel = 2;
+          setTimeout(startMimiGame, 2000);
+        } else {
+          mimiFeedback.textContent = '🏆 Parabéns! Todos os níveis concluídos!';
+          document.querySelector('#mimi-game-controls button').textContent = 'Jogar Novamente';
+          mimiCurrentLevel = 1;
+        }
+      }
+    }
+
+    function handleMimiClick(event) {
+      const el = event.currentTarget;
+      if (el.classList.contains('matched')) return;
+      const value = parseInt(el.dataset.value);
+      const type = el.dataset.type;
+
+      if (!mimiSelectedElement) {
+        el.classList.add('selected');
+        mimiSelectedElement = el;
+        mimiTypeSelected = type;
+        mimiFeedback.textContent = `Selecionado: ${el.textContent}. Agora clique no correspondente.`;
+        mimiFeedback.classList.remove('error');
+        return;
+      }
+      if (mimiSelectedElement === el) {
+        el.classList.remove('selected');
+        mimiSelectedElement = null;
+        mimiTypeSelected = null;
+        mimiFeedback.textContent = 'Seleção cancelada.';
+        mimiFeedback.classList.remove('error');
+        return;
+      }
+      if (type === mimiTypeSelected) {
+        mimiFeedback.textContent = '❌ Escolha um extenso E um numeral.';
+        mimiFeedback.classList.add('error');
+        setTimeout(() => {
+          mimiFeedback.classList.remove('error');
+          mimiFeedback.textContent = 'Escolha um item de cada fileira.';
+        }, 1000);
+        return;
+      }
+
+      if (value === parseInt(mimiSelectedElement.dataset.value)) {
+        mimiFeedback.textContent = `✅ Acerto! Número ${value} combinado.`;
+        mimiFeedback.classList.remove('error');
+        el.classList.add('matched');
+        mimiSelectedElement.classList.add('matched');
+        mimiSelectedElement.classList.remove('selected');
+        mimiSelectedElement = null;
+        mimiTypeSelected = null;
+        mimiMatchesCompleted++;
+        checkMimiWin();
+      } else {
+        mimiFeedback.textContent = `❌ Erro! ${mimiSelectedElement.textContent} não é ${el.textContent}.`;
+        mimiFeedback.classList.add('error');
+        mimiSelectedElement.classList.remove('selected');
+        mimiSelectedElement = null;
+        mimiTypeSelected = null;
+        setTimeout(() => {
+          mimiFeedback.classList.remove('error');
+          mimiFeedback.textContent = `Tente novamente. ${10 - mimiMatchesCompleted} pares restantes.`;
+        }, 1500);
+      }
+    }
+
+    /* ============================================ */
+    /* TIKO                                         */
+    /* ============================================ */
+    const TILE_COUNT = 9;
+    const GRID_SIZE = 3;
+    const TIKO_FEEDBACK = document.getElementById('tiko-feedback');
+    const TIKO_GRID = document.getElementById('tiko-puzzle-grid');
+    let puzzleState = [];
+    let isTikoGameRunning = false;
+
+    function getTilePosition(index) {
+      const row = Math.floor(index / GRID_SIZE);
+      const col = index % GRID_SIZE;
+      const x = (col / (GRID_SIZE - 1)) * 100;
+      const y = (row / (GRID_SIZE - 1)) * 100;
+      return `${x}% ${y}%`;
+    }
+
+    function createTikoTile(index, value) {
+      const tile = document.createElement('div');
+      tile.classList.add('puzzle-tile');
+      tile.dataset.value = value;
+      tile.dataset.index = index;
+      if (value === TILE_COUNT) {
+        tile.classList.add('empty');
+      } else {
+        tile.style.backgroundPosition = getTilePosition(value - 1);
+        tile.addEventListener('click', handleTikoClick);
+      }
+      return tile;
+    }
+
+    function renderTikoPuzzle() {
+      TIKO_GRID.innerHTML = '';
+      puzzleState.forEach((value, index) => {
+        TIKO_GRID.appendChild(createTikoTile(index, value));
+      });
+    }
+
+    function shufflePuzzle(array) {
+      let a = [...array];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      let inv = 0;
+      for (let i = 0; i < TILE_COUNT; i++)
+        for (let j = i + 1; j < TILE_COUNT; j++)
+          if (a[i] !== TILE_COUNT && a[j] !== TILE_COUNT && a[i] > a[j]) inv++;
+      if (inv % 2 !== 0) {
+        for (let i = 0; i < TILE_COUNT - 1; i++) {
+          if (a[i] !== TILE_COUNT && a[i + 1] !== TILE_COUNT) {
+            [a[i], a[i + 1]] = [a[i + 1], a[i]];
+            break;
+          }
+        }
+      }
+      return a;
+    }
+
+    function isSolved(state) {
+      for (let i = 0; i < TILE_COUNT; i++) if (state[i] !== i + 1) return false;
+      return true;
+    }
+
+    function startTikoGame() {
+      const solved = Array.from({ length: TILE_COUNT }, (_, i) => i + 1);
+      do { puzzleState = shufflePuzzle(solved); } while (isSolved(puzzleState));
+      renderTikoPuzzle();
+      isTikoGameRunning = true;
+      TIKO_FEEDBACK.textContent = 'Clique nas peças adjacentes ao espaço vazio para movê-las.';
+      document.querySelector('#tiko-game-controls button').textContent = 'Reiniciar Quebra-cabeça';
+    }
+
+    function resetTikoGame() {
+      TIKO_GRID.innerHTML = '';
+      puzzleState = [];
+      isTikoGameRunning = false;
+      TIKO_FEEDBACK.textContent = "Clique em 'Iniciar Quebra-cabeça' para embaralhar as peças.";
+      document.querySelector('#tiko-game-controls button').textContent = 'Iniciar Quebra-cabeça';
+    }
+
+    function getAdjacentIndexes(index) {
+      const row = Math.floor(index / GRID_SIZE);
+      const col = index % GRID_SIZE;
+      const adj = [];
+      if (row > 0) adj.push(index - GRID_SIZE);
+      if (row < GRID_SIZE - 1) adj.push(index + GRID_SIZE);
+      if (col > 0) adj.push(index - 1);
+      if (col < GRID_SIZE - 1) adj.push(index + 1);
+      return adj;
+    }
+
+    function checkTikoWin() {
+      for (let i = 0; i < TILE_COUNT; i++) if (puzzleState[i] !== i + 1) return false;
+      return true;
+    }
+
+    function handleTikoClick(event) {
+      if (!isTikoGameRunning) return;
+      const tile = event.currentTarget;
+      const idx = parseInt(tile.dataset.index);
+      const emptyIdx = puzzleState.indexOf(TILE_COUNT);
+      const adj = getAdjacentIndexes(emptyIdx);
+
+      if (adj.includes(idx)) {
+        [puzzleState[idx], puzzleState[emptyIdx]] = [puzzleState[emptyIdx], puzzleState[idx]];
+        renderTikoPuzzle();
+
+        if (checkTikoWin()) {
+          isTikoGameRunning = false;
+          TIKO_FEEDBACK.textContent = '🏆 Missão Completa! Tiko está feliz com a imagem restaurada!';
+          const finalTile = TIKO_GRID.querySelector(`[data-value="${TILE_COUNT}"]`);
+          if (finalTile) {
+            finalTile.classList.remove('empty');
+            finalTile.style.backgroundImage = "url('tiko_puzzle_image.png')";
+            finalTile.style.backgroundSize = '300% 300%';
+            finalTile.style.backgroundPosition = getTilePosition(TILE_COUNT - 1);
+            TIKO_GRID.querySelectorAll('.puzzle-tile').forEach(t => t.removeEventListener('click', handleTikoClick));
+          }
+        } else {
+          TIKO_FEEDBACK.textContent = 'Movimento realizado. Continue!';
+        }
+      } else {
+        TIKO_FEEDBACK.textContent = '❌ Clique em uma peça adjacente ao espaço vazio.';
+        setTimeout(() => { if (isTikoGameRunning) TIKO_FEEDBACK.textContent = 'Continue a missão!'; }, 1000);
+      }
+    }
+
+    /* ============================================ */
+    /* ESTRELAS DE FUNDO                            */
+    /* ============================================ */
+    const canvas = document.getElementById('stars');
+    const ctx = canvas.getContext('2d');
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const stars = Array.from({ length: 120 }, () => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      r: Math.random() * 1.5 + 0.3,
+      o: Math.random()
+    }));
+
+    function drawStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const s of stars) {
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${0.7 + 0.3 * Math.sin(Date.now() / 1000 + s.o * 6.28)})`;
+        ctx.fill();
+      }
+      requestAnimationFrame(drawStars);
+    }
+    drawStars();
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
